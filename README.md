@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project aims to build a weather station using the RP2030 microcontroller. The current version includes basic functionality for sensor initialization and data reading. This is an early version, not functional,features are still being developed.
+This project aims to build a weather station using the RP2030 microcontroller. The current version includes basic functionality for sensor initialization and data reading. This is an early version, not functional, features are still being developed.
 
 ## Planned Features
 
