@@ -3,7 +3,10 @@
 
 #include "sensors.h"
 
-void radio_init(void);
+// Initialize the radio module
+void radio_init();
+
+// Send sensor data using the radio module
 void radio_send_data(const SensorData *data);
 
-#endif
+#endif // RADIO_H

@@ -55,6 +55,7 @@ add_executable(weather_station
         INA219.c
         SHT30.c
         BMP280.c
+        nrf24l01.c
     )
 
 pico_set_program_name(weather_station "weather_station")
