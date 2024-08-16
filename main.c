@@ -40,11 +40,13 @@ int main()
         printf("Ping!\n");
 
         // Read sensor data
+        printf("Reading sensors...\n");
         SensorData data = sensors_read_all();
-
+        printf("Reading finished...\n");
         // Send data via radio
+        printf("Sending data...\n");
         radio_send_data(&data);
-
+        printf("Sending finished...\n");
         // Delay between readings
         sleep_ms(1000);
     }

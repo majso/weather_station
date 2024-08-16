@@ -62,7 +62,7 @@ pico_set_program_name(weather_station "weather_station")
 pico_set_program_version(weather_station "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(weather_station 0)
+pico_enable_stdio_uart(weather_station 1)
 pico_enable_stdio_usb(weather_station 1)
 
 # Add the standard library to the build
