@@ -56,7 +56,7 @@ typedef struct {
 } nrf24l01_device;
 
 // Function prototypes
-void nrf24l01_init(nrf24l01_device *device);
+bool nrf24l01_init(nrf24l01_device *device);
 void nrf24l01_set_rx_address(nrf24l01_device *device, const uint8_t *address);
 void nrf24l01_set_tx_address(nrf24l01_device *device, const uint8_t *address);
 bool nrf24l01_send(nrf24l01_device *device, const uint8_t *data, uint8_t length);
