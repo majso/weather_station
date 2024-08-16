@@ -26,6 +26,7 @@
 int main()
 {
     stdio_init_all();
+    printf("Hello, IoT world from RP2040!\n");
     
     // Initialize sensors and radio
     sensors_init();
