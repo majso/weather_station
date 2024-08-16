@@ -4,24 +4,24 @@
 #include "hardware/spi.h"
 #include <stdio.h>
 
-#define RADIO_CS_PIN 10  // Define your Chip Select (CS) pin
-#define RADIO_CE_PIN 9   // Define your Chip Enable (CE) pin
-
 static nrf24l01_device radio_device;
 
 // Initialize the radio module
 void radio_init() {
-    // Initialize SPI (assuming default SPI0 pins)
+    // Initialize SPI (using pins smaller than 13)
     spi_init(spi0, 8 * 1000 * 1000); // 8 MHz
-    gpio_set_function(16, GPIO_FUNC_SPI); // SCK
-    gpio_set_function(17, GPIO_FUNC_SPI); // TX
-    gpio_set_function(18, GPIO_FUNC_SPI); // RX
+    gpio_set_function(6, GPIO_FUNC_SPI); // SCK (GPIO 6)
+    gpio_set_function(7, GPIO_FUNC_SPI); // MOSI (GPIO 7)
+    gpio_set_function(4, GPIO_FUNC_SPI); // MISO (GPIO 4)
 
-    // Initialize GPIO pins for nRF24L01+
-    gpio_set_dir(RADIO_CS_PIN, GPIO_OUT);
-    gpio_set_dir(RADIO_CE_PIN, GPIO_OUT);
-    gpio_put(RADIO_CS_PIN, 1); // Set CS high
-    gpio_put(RADIO_CE_PIN, 0); // Set CE low
+    // Set CSN and CE as output
+    gpio_init(5); // CSN (GPIO 5)
+    gpio_set_dir(5, GPIO_OUT);
+    gpio_put(5, 1); // Set CSN high
+
+    gpio_init(3); // CE (GPIO 3)
+    gpio_set_dir(3, GPIO_OUT);
+    gpio_put(3, 0); // Set CE low (initially)
 
     // Initialize nRF24L01+
     radio_device.tx_buffer = NULL;  // You can allocate memory if needed
