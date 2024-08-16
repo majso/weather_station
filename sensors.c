@@ -29,17 +29,9 @@ void sensors_init() {
     printf("INA219 Battery sensor initialized\n");
 
     // Initialize SHT30 sensor
-    sht30_init(i2c0, 0x42); // Replace with your SHT30 address if different
-    printf("SHT30 sensor initialized successfully\n");
-
-    printf("SHT30 starting reset...\n");
-    sht30_soft_reset();
-    printf("SHT30 sensor reset successfully\n");
-    
+    //sht30_init(i2c0, 0x42); // Replace with your SHT30 address if different
     // Initialize BMP280 sensor
-    printf("BMP280 starting init...\n");
-    bmp280_init();
-    printf("BMP280 sensor initialized and calibrated\n");
+    //bmp280_init();
    
     printf("All sensors initialized\n");
 }
