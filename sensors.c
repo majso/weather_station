@@ -6,29 +6,42 @@
 #include "bmp280.h" // Include the header file for the BMP280 sensor
 #include <stdio.h>
 
+INA219 ina219_battery;
+INA219 ina219_solar;
+bmp280 bmp;
+
 // Initialize sensors
 void sensors_init() {
-    // Initialize I2C (assuming default I2C0 pins)
+    // Initialize I2C with GPIO 14 and 15
     i2c_init(i2c0, 100 * 1000); // 100kHz
-    printf("Starting i2c\n");
-    gpio_set_function(4, GPIO_FUNC_I2C);
-    gpio_set_function(5, GPIO_FUNC_I2C);
-    gpio_pull_up(4);
-    gpio_pull_up(5);
+    printf("Starting I2C\n");
+    gpio_set_function(14, GPIO_FUNC_I2C);
+    gpio_set_function(15, GPIO_FUNC_I2C);
+    gpio_pull_up(14);
+    gpio_pull_up(15);
 
-    // Initialize INA219 sensors (assuming default addresses)
-    INA219 ina219_battery;
-    INA219 ina219_solar;
-    ina219_init(&ina219_battery, i2c0, 0x41);
-    printf("Starting ina219_battery\n");
-
+    // Initialize INA219 sensors
+    
     ina219_init(&ina219_solar, i2c0, 0x40);
-    printf("Starting ina219_solar\n");
+    printf("INA219 Solar sensor initialized\n");
+
+    ina219_init(&ina219_battery, i2c0, 0x41);
+    printf("INA219 Battery sensor initialized\n");
 
     // Initialize SHT30 sensor
-    sht30_init(i2c0, 0x44); // Replace with your SHT30 address if different
-    printf("Starting sht30\n");
+    sht30_init(i2c0, 0x42); // Replace with your SHT30 address if different
+    printf("SHT30 sensor initialized successfully\n");
+
+    printf("SHT30 starting reset...\n");
     sht30_soft_reset();
+    printf("SHT30 sensor reset successfully\n");
+    
+    // Initialize BMP280 sensor
+    printf("BMP280 starting init...\n");
+    bmp280_init();
+    printf("BMP280 sensor initialized and calibrated\n");
+   
+    printf("All sensors initialized\n");
 }
 // Read current from INA219 sensor// Read current from INA219 sensor
 float read_current_from_ina219(INA219 *ina219, uint8_t address) {
@@ -61,41 +74,38 @@ float read_humidity_from_sht30() {
     sht30_read_data(&temperature, &humidity);
         return humidity;
 }
-
-float read_temperature_from_bmp280(bmp280 *device) {
-    bmp280_read_temperature(device);
-        return device->temperature;
+// Read temperature from BMP280 sensor
+float read_temperature_from_bmp280() {
+    bmp280_read_temperature(&bmp);
+    return bmp.temperature;
 }
 
-float read_pressure_from_bmp280(bmp280 *device) {
-    bmp280_read_pressure(device);
-        return device->pressure;
+// Read pressure from BMP280 sensor
+float read_pressure_from_bmp280() {
+    bmp280_read_pressure(&bmp);
+    return bmp.pressure;
 }
+
 
 // Read all sensor data
+// Read all sensor data
 SensorData sensors_read_all() {
-    SensorData data;
+    SensorData data = {0};
 
-    bmp280_init();
-    bmp280 bmp;
-    bmp280_calibrate(&bmp);
+    // Read temperature and pressure from BMP280
+    data.temperature = read_temperature_from_bmp280();
+    data.pressure = read_pressure_from_bmp280();
 
-    // Read temperature and pressure
-    data.temperature = read_temperature_from_bmp280(&bmp);
-    data.pressure = read_pressure_from_bmp280(&bmp);
+    // Read temperature and humidity from SHT30 sensor
+    data.exterior_temperature = read_temperature_from_sht30();
+    data.exterior_humidity = read_humidity_from_sht30();
 
-    // Read temperature, pressure, and humidity
-    data.temperature = read_temperature_from_sht30();
-    data.humidity = read_humidity_from_sht30();
-
-    // Read battery data
-    INA219 ina219_battery;
+    // Read battery data from INA219 sensor
     data.battery_voltage = read_voltage_from_ina219(&ina219_battery, 0x41);
     data.battery_current = read_current_from_ina219(&ina219_battery, 0x41);
     data.battery_power = read_power_from_ina219(&ina219_battery, 0x41);
 
-    // Read solar data
-    INA219 ina219_solar;
+    // Read solar data from INA219 sensor
     data.solar_voltage = read_voltage_from_ina219(&ina219_solar, 0x40);
     data.solar_current = read_current_from_ina219(&ina219_solar, 0x40);
     data.solar_power = read_power_from_ina219(&ina219_solar, 0x40);

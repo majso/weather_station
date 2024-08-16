@@ -5,7 +5,7 @@
 #include "pico/stdlib.h"
 
 // SHT30 I2C Address
-#define SHT30_I2C_ADDR 0x44
+#define SHT30_I2C_ADDR 0x42
 
 // SHT30 Commands
 #define SHT30_MEASURE_HIGHREP_STRETCH 0x2400
@@ -15,7 +15,7 @@
 
 // Function prototypes
 void sht30_init(i2c_inst_t *i2c_instance, uint8_t i2c_addr);
-void sht30_soft_reset();
+bool sht30_soft_reset();
 bool sht30_read_data(float *temperature, float *humidity);
 
 #endif

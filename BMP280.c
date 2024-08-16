@@ -2,23 +2,38 @@
 #include <stdlib.h>
 #include <pico/stdlib.h>
 #include "hardware/i2c.h"
+#include <stdio.h>
+
+// Define BMP280 I2C Address if using a non-default address
+#define BMP280_I2C_ADDRESS 0x43  // Change this to your actual address if necessary
 
 static void bmp280_write_reg(const uint8_t reg, const uint32_t size, const uint8_t* src) {
     uint8_t* buff = (uint8_t*)calloc(size + 1, 1);
     if (buff == NULL) {
+        printf("Memory allocation failed in bmp280_write_reg\n");
         return; // Error handling
     }
     buff[0] = reg;
     for (uint32_t i = 0; i < size; i++) {
         buff[i + 1] = src[i];
     }
-    i2c_write_blocking(i2c0, BMP280_I2C_ADDRESS, buff, size + 1, false);
+    int result = i2c_write_blocking(i2c0, BMP280_I2C_ADDRESS, buff, size + 1, false);
+    if (result < 0) {
+        printf("I2C write failed in bmp280_write_reg\n");
+    }
     free(buff);
 }
 
 static void bmp280_read_reg(const uint8_t reg, const uint32_t size, uint8_t* dst) {
-    i2c_write_blocking(i2c0, BMP280_I2C_ADDRESS, &reg, 1, true);
-    i2c_read_blocking(i2c0, BMP280_I2C_ADDRESS, dst, size, false);
+    int result = i2c_write_blocking(i2c0, BMP280_I2C_ADDRESS, &reg, 1, true);
+    if (result < 0) {
+        printf("I2C write failed in bmp280_read_reg\n");
+        return;
+    }
+    result = i2c_read_blocking(i2c0, BMP280_I2C_ADDRESS, dst, size, false);
+    if (result < 0) {
+        printf("I2C read failed in bmp280_read_reg\n");
+    }
 }
 
 int bmp280_init() {
@@ -27,6 +42,7 @@ int bmp280_init() {
     uint8_t chip_ID;
     bmp280_read_reg(BMP280_CHIP_ID_REG, 1, &chip_ID);
     if (chip_ID != BMP280_CHIP_ID) {
+        printf("BMP280 chip ID mismatch: expected 0x%02x, got 0x%02x\n", BMP280_CHIP_ID, chip_ID);
         return -1;
     }
 

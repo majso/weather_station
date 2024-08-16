@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define BMP280_I2C_ADDRESS 0x76
+#define BMP280_I2C_ADDRESS 0x43
 
 #define BMP280_CHIP_ID_REG 0xD0
 #define BMP280_CHIP_ID 0x58
