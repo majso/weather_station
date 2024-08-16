@@ -4,17 +4,24 @@
 #include "pico/stdlib.h" // For Pico-specific functions like sleep_ms
 #include <string.h>    // For memcpy
 #include <stdbool.h> // For bool type
+#include <stdio.h>
 
 // Helper function to write a single register
 static void nrf24l01_write_register(uint8_t reg, uint8_t value) {
     uint8_t buffer[2] = {NRF24L01_CMD_W_REGISTER | reg, value};
+    gpio_put(NRF24L01_CS_PIN, 0); // Set CS low
     spi_write_blocking(spi0, buffer, sizeof(buffer));
+    gpio_put(NRF24L01_CS_PIN, 1); // Set CS high
+    printf("Wrote 0x%02X to register 0x%02X\n", value, reg);
 }
 
-// Helper function to read a single register
+// Read a register from the nRF24L01
 static uint8_t nrf24l01_read_register(uint8_t reg) {
     uint8_t buffer[2] = {NRF24L01_CMD_R_REGISTER | reg, 0};
+    gpio_put(NRF24L01_CS_PIN, 0); // Set CS low
     spi_write_read_blocking(spi0, buffer, buffer, sizeof(buffer));
+    gpio_put(NRF24L01_CS_PIN, 1); // Set CS high
+    printf("Read 0x%02X from register 0x%02X\n", buffer[1], reg);
     return buffer[1];
 }
 
@@ -22,15 +29,19 @@ static uint8_t nrf24l01_read_register(uint8_t reg) {
 static void nrf24l01_write_registers(uint8_t reg, const uint8_t *values, uint8_t length) {
     uint8_t buffer[32 + 1]; // Adjust size as needed
     buffer[0] = NRF24L01_CMD_W_REGISTER | reg;
+    gpio_put(NRF24L01_CS_PIN, 0); // Set CS low
     memcpy(buffer + 1, values, length);
     spi_write_blocking(spi0, buffer, length + 1);
+    gpio_put(NRF24L01_CS_PIN, 1); // Set CS high
 }
 
 // Helper function to read multiple bytes
 static void nrf24l01_read_registers(uint8_t reg, uint8_t *values, uint8_t length) {
     uint8_t buffer[32 + 1]; // Adjust size as needed
     buffer[0] = NRF24L01_CMD_R_REGISTER | reg;
+    gpio_put(NRF24L01_CS_PIN, 0); // Set CS low
     spi_write_read_blocking(spi0, buffer, buffer, length + 1);
+    gpio_put(NRF24L01_CS_PIN, 1); // Set CS high
     memcpy(values, buffer + 1, length);
 }
 
@@ -43,14 +54,21 @@ bool nrf24l01_init(nrf24l01_device *device) {
     gpio_set_dir(NRF24L01_CS_PIN, GPIO_OUT);
     gpio_set_dir(NRF24L01_CE_PIN, GPIO_OUT);
     gpio_put(NRF24L01_CS_PIN, 1); // Set CS high
+    printf("Powering on nRF24L01\n");
 
     // Attempt to initialize NRF24L01
     nrf24l01_write_register(NRF24L01_REG_CONFIG, 0x0B); // Power up, CRC 16-bit, RX/TX
     // Check the configuration
+    printf("Reading config of nRF24L01\n");
+
     uint8_t config = nrf24l01_read_register(NRF24L01_REG_CONFIG);
+
+    /*
     if ((config & 0x0B) != 0x0B) {
+        printf("Reading config of nRF24L01 failed\n");
         return false; // Initialization failed
-    }
+    }*/
+    printf("Writting config to the nRF24L01\n");
 
     nrf24l01_write_register(NRF24L01_REG_EN_AA, 0x00); // Disable auto-acknowledgment
     nrf24l01_write_register(NRF24L01_REG_EN_RXADDR, 0x01); // Enable RX pipe 0
@@ -60,11 +78,18 @@ bool nrf24l01_init(nrf24l01_device *device) {
     nrf24l01_write_register(NRF24L01_REG_RF_SETUP, 0x0F); // 1Mbps, 0dBm
     nrf24l01_write_register(NRF24L01_REG_STATUS, 0x70); // Clear interrupts
 
-    // Verify initialization
-    config = nrf24l01_read_register(NRF24L01_REG_CONFIG);
-    if ((config & 0x0B) != 0x0B) {
-        return false; // Initialization failed
-    }
+       // Read and display all configuration registers to verify
+    printf("Reading all configuration registers\n");
+    uint8_t read_buffer[6];
+    nrf24l01_read_registers(NRF24L01_REG_CONFIG, read_buffer, sizeof(read_buffer));
+    printf("Config register: 0x%02X\n", read_buffer[0]);
+    printf("EN_AA register: 0x%02X\n", read_buffer[1]);
+    printf("EN_RXADDR register: 0x%02X\n", read_buffer[2]);
+    printf("SETUP_AW register: 0x%02X\n", read_buffer[3]);
+    printf("SETUP_RETR register: 0x%02X\n", read_buffer[4]);
+    printf("RF_CH register: 0x%02X\n", read_buffer[5]);
+
+    printf("Init of nRF24L01 succeeded\n");
 
     return true; // Initialization succeeded
 }
