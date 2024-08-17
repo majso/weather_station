@@ -15,10 +15,10 @@ void sensors_init() {
     // Initialize I2C with GPIO 14 and 15
     i2c_init(i2c0, 100 * 1000); // 100kHz
     printf("Starting I2C\n");
-    gpio_set_function(14, GPIO_FUNC_I2C);
-    gpio_set_function(15, GPIO_FUNC_I2C);
-    gpio_pull_up(14);
-    gpio_pull_up(15);
+    gpio_set_function(I2C_SDA_PIN, GPIO_FUNC_I2C);
+    gpio_set_function(I2C_SCL_PIN, GPIO_FUNC_I2C);
+    gpio_pull_up(I2C_SDA_PIN);
+    gpio_pull_up(I2C_SCL_PIN);
 
     // Initialize INA219 sensors
     

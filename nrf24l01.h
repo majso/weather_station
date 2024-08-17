@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 // SPI configuration
-#define NRF24L01_SPI_SPEED    4000000 // 4 MHz, adjust if needed
+#define NRF24L01_SPI_SPEED    1000000 // 1 MHz, adjust if needed
 #define NRF24L01_CS_PIN       5       // Chip Select (CS) pin (GPIO 5)
 #define NRF24L01_CE_PIN       3       // Chip Enable (CE) pin (GPIO 3)
 
