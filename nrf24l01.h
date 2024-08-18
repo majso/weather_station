@@ -6,13 +6,13 @@
 
 // SPI configuration
 #define NRF24L01_SPI_SPEED    1000000 // 1 MHz, adjust if needed
-#define NRF24L01_CS_PIN       5       // Chip Select (CS) pin (GPIO 5)
-#define NRF24L01_CE_PIN       3       // Chip Enable (CE) pin (GPIO 3)
+#define NRF24L01_CS_PIN       5       //Orange Chip Select (CS) pin (GPIO 5)
+#define NRF24L01_CE_PIN       3       //Yellow Chip Enable (CE) pin (GPIO 3) 
 
 // SPI0 Pin Definitions
-#define NRF24L01_SPI_SCK_PIN  6       // SPI Clock (SCK) pin (GPIO 6)
-#define NRF24L01_SPI_MOSI_PIN 7       // SPI Master Out Slave In (MOSI) pin (GPIO 7)
-#define NRF24L01_SPI_MISO_PIN 4       // SPI Master In Slave Out (MISO) pin (GPIO 4)
+#define NRF24L01_SPI_SCK_PIN  6       //Blue SPI Clock (SCK) pin (GPIO 6)
+#define NRF24L01_SPI_MOSI_PIN 7       //Green SPI Master Out Slave In (MOSI) pin (GPIO 7)
+#define NRF24L01_SPI_MISO_PIN 4       //Purple SPI Master In Slave Out (MISO) pin (GPIO 4)
 
 // NRF24L01 Commands
 #define NRF24L01_CMD_R_REGISTER  0x00
