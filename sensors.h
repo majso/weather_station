@@ -5,6 +5,9 @@
 #define I2C_SDA_PIN  14  //Black I2C Data pin (GPIO 14)
 #define I2C_SCL_PIN  15  //White I2C Clock pin (GPIO 15)
 
+#define I2C_FREQ_HZ  100000
+#define I2C_BUS_INSTANCE i2c1
+
 typedef struct {
     float temperature;
     float pressure;
