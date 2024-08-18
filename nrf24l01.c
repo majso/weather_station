@@ -168,12 +168,7 @@ bool nrf24l01_init(nrf24l01_device *device) {
     if (config != 0x0B) {
         printf("Failed to read CONFIG register\n");
         return false; // Initialization failed
-    } else {
-        printf("Successfully read CONFIG register\n");
-    }
-
-    printf("Writting new config to the nRF24L01\n");
-
+   
     nrf24l01_write_register(NRF24L01_REG_EN_AA, 0x00); // Disable auto-acknowledgment
     nrf24l01_write_register(NRF24L01_REG_EN_RXADDR, 0x01); // Enable RX pipe 0
     nrf24l01_write_register(NRF24L01_REG_SETUP_AW, 0x03); // 5-byte address width
@@ -182,13 +177,12 @@ bool nrf24l01_init(nrf24l01_device *device) {
     nrf24l01_write_register(NRF24L01_REG_RF_SETUP, 0x02); // 1Mbps, 0dBm
     nrf24l01_write_register(NRF24L01_REG_STATUS, 0x70); // Clear interrupts
 
-    // Print the configuration
-    nrf24l01_print_config_register_status();
-    // Print the status
-    nrf24l01_print_register_status();
-
-    printf("Init of nRF24L01 succeeded\n");
-
+    if (MRF24L01_PRINT_DEBUG) {
+        // Print the configuration
+        nrf24l01_print_config_register_status();
+        // Print the status
+        nrf24l01_print_register_status();    
+    }
     return true; // Initialization succeeded
 }
 

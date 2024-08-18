@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// NRF24L01 Configuration
+#define NRF24L01_PRINT_DEBUG 0
+
 // SPI configuration
 #define NRF24L01_SPI_SPEED    1000000 // 1 MHz, adjust if needed
 #define NRF24L01_CS_PIN       5       //Orange Chip Select (CS) pin (GPIO 5)
