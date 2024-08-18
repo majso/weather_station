@@ -38,6 +38,7 @@ void sensors_init() {
 // Read current from INA219 sensor// Read current from INA219 sensor
 float read_current_from_ina219(INA219 *ina219, uint8_t address) {
     ina219_init(ina219, i2c0, address);
+    printf("Reading Current from INA219\n");
     return ina219_read_current(ina219);
 }
 
@@ -100,6 +101,7 @@ SensorData sensors_read_all() {
     // Read solar data from INA219 sensor
     data.solar_voltage = read_voltage_from_ina219(&ina219_solar, 0x40);
     data.solar_current = read_current_from_ina219(&ina219_solar, 0x40);
+    printf("Solar current: %f\n", data.solar_current);
     data.solar_power = read_power_from_ina219(&ina219_solar, 0x40);
 
     return data;

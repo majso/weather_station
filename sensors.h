@@ -2,8 +2,8 @@
 #define SENSORS_H
 
 // Define I2C pins
-#define I2C_SDA_PIN  14  // I2C Data pin (GPIO 14)
-#define I2C_SCL_PIN  15  // I2C Clock pin (GPIO 15)
+#define I2C_SDA_PIN  14  //Black I2C Data pin (GPIO 14)
+#define I2C_SCL_PIN  15  //White I2C Clock pin (GPIO 15)
 
 typedef struct {
     float temperature;

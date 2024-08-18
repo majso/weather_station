@@ -12,7 +12,7 @@ int main()
     
     // Initialize sensors and radio
     printf("Sensors starting..\n");
-    //sensors_init();
+    sensors_init();
     printf("Radio starting..\n");
     radio_init();
 
