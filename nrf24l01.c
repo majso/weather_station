@@ -196,9 +196,15 @@ void nrf24l01_set_tx_address(nrf24l01_device *device, const uint8_t *address) {
 }
 
 bool nrf24l01_send(nrf24l01_device *device, const uint8_t *data, uint8_t length) {
+    if (length > 32) {
+        printf("Error: Data length exceeds maximum payload size\n");
+        return false;
+    }
+
     gpio_put(NRF24L01_CS_PIN, 0); // Select the NRF24L01
-    spi_write_blocking(spi0, (const uint8_t[]){NRF24L01_CMD_W_REGISTER | 0xA0}, 1); // Write to TX payload
-    spi_write_blocking(spi0, data, length);
+    uint8_t tx_command = NRF24L01_CMD_W_REGISTER | 0xA0; // Write to TX payload
+    spi_write_blocking(spi0, &tx_command, 1); // Send command to write to TX payload
+    spi_write_blocking(spi0, data, length); // Send the data
     gpio_put(NRF24L01_CS_PIN, 1); // Deselect the NRF24L01
 
     // Wait for transmission to complete
@@ -206,7 +212,13 @@ bool nrf24l01_send(nrf24l01_device *device, const uint8_t *data, uint8_t length)
 
     // Check if data has been transmitted
     uint8_t status = nrf24l01_read_register(NRF24L01_REG_STATUS);
-    return (status & 0x20); // Check if TX_DS (data sent) bit is set
+    if (status & (1 << 5)) { // TX_DS (data sent) bit
+        printf("Data sent successfully\n");
+        return true;
+    } else {
+        printf("Transmission error, STATUS register: 0x%02X\n", status);
+        return false;
+    }
 }
 
 bool nrf24l01_receive(nrf24l01_device *device, uint8_t *data, uint8_t *length) {
