@@ -10,7 +10,7 @@ static uint8_t i2c_addr;
 // Soft reset the SHT30 sensor
 bool sht30_soft_reset() {
     uint8_t cmd[2] = {0x30, 0xA2};
-
+    printf("SHT30 soft reset started\n");
     // Send soft reset command
     if (i2c_write_blocking(i2c_instance, i2c_addr, cmd, 2, false) < 0) {
         printf("SHT30 soft reset failed\n");
@@ -27,9 +27,6 @@ void sht30_init(i2c_inst_t *i2c_instance_param, uint8_t i2c_addr_param) {
     i2c_addr = i2c_addr_param;
 
     printf("SHT30 connected, initializing...\n");
-
-    // Initialize I2C at 100kHz
-    i2c_init(i2c_instance, 100 * 1000); 
 
     // Perform a soft reset (optional, depending on your requirements)
     sht30_soft_reset();

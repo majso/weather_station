@@ -4,8 +4,9 @@
 #include "hardware/i2c.h"
 #include <stdio.h>
 
-// Define BMP280 I2C Address if using a non-default address
-#define BMP280_I2C_ADDRESS 0x43  // Change this to your actual address if necessary
+// Define I2C instance and address
+static i2c_inst_t *i2c_instance;
+static uint8_t i2c_addr;
 
 static void bmp280_write_reg(const uint8_t reg, const uint32_t size, const uint8_t* src) {
     uint8_t* buff = (uint8_t*)calloc(size + 1, 1);
@@ -17,7 +18,7 @@ static void bmp280_write_reg(const uint8_t reg, const uint32_t size, const uint8
     for (uint32_t i = 0; i < size; i++) {
         buff[i + 1] = src[i];
     }
-    int result = i2c_write_blocking(i2c0, BMP280_I2C_ADDRESS, buff, size + 1, false);
+    int result = i2c_write_blocking(i2c_instance, i2c_addr, buff, size + 1, false);
     if (result < 0) {
         printf("I2C write failed in bmp280_write_reg\n");
     }
@@ -25,27 +26,32 @@ static void bmp280_write_reg(const uint8_t reg, const uint32_t size, const uint8
 }
 
 static void bmp280_read_reg(const uint8_t reg, const uint32_t size, uint8_t* dst) {
-    int result = i2c_write_blocking(i2c0, BMP280_I2C_ADDRESS, &reg, 1, true);
+    printf("Write blocking stared on instance %d\n", i2c_instance); 
+    int result = i2c_write_blocking(i2c_instance, i2c_addr, &reg, 1, true);
     if (result < 0) {
         printf("I2C write failed in bmp280_read_reg\n");
         return;
     }
-    result = i2c_read_blocking(i2c0, BMP280_I2C_ADDRESS, dst, size, false);
+    printf("Read blocking stared on instance %d\n", i2c_instance);
+    result = i2c_read_blocking(i2c_instance, i2c_addr, dst, size, false);
     if (result < 0) {
         printf("I2C read failed in bmp280_read_reg\n");
     }
 }
 
-int bmp280_init() {
-    sleep_ms(20);
+int bmp280_init(i2c_inst_t *i2c_instance_param, uint8_t i2c_addr_param) {
+    i2c_instance = i2c_instance_param;
+    i2c_addr = i2c_addr_param;
 
+    sleep_ms(20);
+    printf("BMP280 connected, initializing...\n");
     uint8_t chip_ID;
     bmp280_read_reg(BMP280_CHIP_ID_REG, 1, &chip_ID);
     if (chip_ID != BMP280_CHIP_ID) {
         printf("BMP280 chip ID mismatch: expected 0x%02x, got 0x%02x\n", BMP280_CHIP_ID, chip_ID);
         return -1;
     }
-
+    printf("BMP280 chip ID match: expected 0x%02x, got 0x%02x\n", BMP280_CHIP_ID, chip_ID);
     // Reset registers
     uint8_t reset_val = BMP280_RESET_VAL;
     bmp280_write_reg(BMP280_RESET_REG, 1, &reset_val);

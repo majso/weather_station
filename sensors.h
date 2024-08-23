@@ -8,6 +8,11 @@
 #define I2C_FREQ_HZ  100000
 #define I2C_BUS_INSTANCE i2c1
 
+#define BMP280_I2C_ADDRESS 0x76
+#define SHT30_I2C_ADDRESS 0x44
+#define INA219_I2C_ADDRESS 0x40
+
+
 typedef struct {
     float temperature;
     float pressure;

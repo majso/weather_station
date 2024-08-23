@@ -41,16 +41,18 @@ void sensors_init() {
 
     // Initialize INA219 sensors
     
-    ina219_init(&ina219_solar, I2C_BUS_INSTANCE, 0x40);
+    ina219_init(&ina219_solar, I2C_BUS_INSTANCE, INA219_I2C_ADDRESS);
     printf("INA219 Solar sensor initialized\n");
 
     //ina219_init(&ina219_battery, i2c0, 0x41);
     //printf("INA219 Battery sensor initialized\n");
 
     // Initialize SHT30 sensor
-    //sht30_init(i2c0, 0x42); // Replace with your SHT30 address if different
+    sht30_init(I2C_BUS_INSTANCE, SHT30_I2C_ADDRESS); // Replace with your SHT30 address if different
+    printf("SHT30 sensor initialized\n");
     // Initialize BMP280 sensor
-    //bmp280_init();
+    bmp280_init(I2C_BUS_INSTANCE, BMP280_I2C_ADDRESS);
+    printf("BMP280 sensor initialized\n");
    
     printf("All sensors initialized\n");
 }

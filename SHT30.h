@@ -5,7 +5,7 @@
 #include "pico/stdlib.h"
 
 // SHT30 I2C Address
-#define SHT30_I2C_ADDR 0x42
+#define SHT30_I2C_ADDR 0x44
 
 // SHT30 Commands
 #define SHT30_MEASURE_HIGHREP_STRETCH 0x2400
