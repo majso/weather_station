@@ -60,7 +60,6 @@ void sensors_init() {
 
 // Read current from INA219 sensor
 float read_current_from_ina219(INA219 *ina219) {
-    printf("Reading Current from INA219\n");
     return ina219_read_current(ina219);
 }
 
