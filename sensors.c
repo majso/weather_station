@@ -104,15 +104,7 @@ float read_pressure_from_bmp280() {
 SensorData sensors_read_all() {
     SensorData data = {0};
 
-    // Read temperature and pressure from BMP280
     /*
-    data.temperature = read_temperature_from_bmp280();
-    data.pressure = read_pressure_from_bmp280();
-
-    // Read temperature and humidity from SHT30 sensor
-    data.exterior_temperature = read_temperature_from_sht30();
-    data.exterior_humidity = read_humidity_from_sht30();
-
     // Read battery data from INA219 sensor
     data.battery_voltage = read_voltage_from_ina219(&ina219_battery);
     data.battery_current = read_current_from_ina219(&ina219_battery);
@@ -126,6 +118,17 @@ SensorData sensors_read_all() {
     printf("Solar current: %f\n", data.solar_current);
     data.solar_power = read_power_from_ina219(&ina219_solar);
     printf("Solar power: %f\n", data.solar_power);
+
+  // Read temperature and humidity from SHT30 sensor
+    data.exterior_temperature = read_temperature_from_sht30();
+    data.exterior_humidity = read_humidity_from_sht30();
+    
+    // Read temperature and pressure from BMP280
+  
+    data.temperature = read_temperature_from_bmp280();
+    data.pressure = read_pressure_from_bmp280();
+
+  
 
     return data;
 }

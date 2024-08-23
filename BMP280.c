@@ -26,13 +26,15 @@ static void bmp280_write_reg(const uint8_t reg, const uint32_t size, const uint8
 }
 
 static void bmp280_read_reg(const uint8_t reg, const uint32_t size, uint8_t* dst) {
-    printf("Write blocking stared on instance %d\n", i2c_instance); 
-    int result = i2c_write_blocking(i2c_instance, i2c_addr, &reg, 1, true);
+    
+    sleep_ms(20);
+    int result = i2c_write_blocking(i2c_instance, i2c_addr, &reg, 1, false);
     if (result < 0) {
         printf("I2C write failed in bmp280_read_reg\n");
         return;
     }
-    printf("Read blocking stared on instance %d\n", i2c_instance);
+    sleep_ms(20);
+
     result = i2c_read_blocking(i2c_instance, i2c_addr, dst, size, false);
     if (result < 0) {
         printf("I2C read failed in bmp280_read_reg\n");
@@ -45,6 +47,7 @@ int bmp280_init(i2c_inst_t *i2c_instance_param, uint8_t i2c_addr_param) {
 
     sleep_ms(20);
     printf("BMP280 connected, initializing...\n");
+    
     uint8_t chip_ID;
     bmp280_read_reg(BMP280_CHIP_ID_REG, 1, &chip_ID);
     if (chip_ID != BMP280_CHIP_ID) {
