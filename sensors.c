@@ -52,6 +52,7 @@ void sensors_init() {
     printf("SHT30 sensor initialized\n");
     // Initialize BMP280 sensor
     bmp280_init(I2C_BUS_INSTANCE, BMP280_I2C_ADDRESS);
+    bmp280_calibrate(&bmp);
     printf("BMP280 sensor initialized\n");
    
     printf("All sensors initialized\n");
@@ -120,13 +121,18 @@ SensorData sensors_read_all() {
     printf("Solar power: %f\n", data.solar_power);
 
   // Read temperature and humidity from SHT30 sensor
+    printf("Reading temperature and humidity from SHT30\n");
     data.exterior_temperature = read_temperature_from_sht30();
+    printf("Temperature: %f\n", data.exterior_temperature);
     data.exterior_humidity = read_humidity_from_sht30();
-    
+    printf("Humidity: %f\n", data.exterior_humidity);
+
     // Read temperature and pressure from BMP280
-  
+    printf("Reading temperature and pressure from BMP280\n");
     data.temperature = read_temperature_from_bmp280();
+    printf("Temperature: %f\n", data.temperature);
     data.pressure = read_pressure_from_bmp280();
+    printf("Pressure: %f\n", data.pressure);
 
   
 

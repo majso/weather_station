@@ -47,7 +47,7 @@ int bmp280_init(i2c_inst_t *i2c_instance_param, uint8_t i2c_addr_param) {
 
     sleep_ms(20);
     printf("BMP280 connected, initializing...\n");
-    
+
     uint8_t chip_ID;
     bmp280_read_reg(BMP280_CHIP_ID_REG, 1, &chip_ID);
     if (chip_ID != BMP280_CHIP_ID) {
@@ -78,19 +78,35 @@ void bmp280_read_pressure(bmp280* device) {
 
     int32_t adc_p = (data[0] << 12) | (data[1] << 4) | (data[2] >> 4);
 
-    int32_t var1, var2, p;
-    var1 = (((device->temperature / 2.0) - 64000.0) * 5120.0);
-    var1 += ((device->coefficients[17] << 8 | device->coefficients[16]) * var1 * var1) / 32768.0;
-    var1 += ((device->coefficients[15] << 8 | device->coefficients[14]) * var1) * 2.0;
-    var1 = (var1 / 4.0) + ((device->coefficients[13] << 8 | device->coefficients[12]) * 65536.0);
-    var2 = ((device->coefficients[11] << 8 | device->coefficients[10]) * var1 * var1) / 524288.0;
-    var1 = ((device->coefficients[9] << 8 | device->coefficients[8]) * var1) / 524288.0;
-    var1 = (1.0 + var1 / 32768.0) * (device->coefficients[7] << 8 | device->coefficients[6]);
+    int32_t var1, var2; 
+    int64_t p;
+    int64_t dig_P1 = (device->coefficients[7] << 8) | device->coefficients[6];
+    int64_t dig_P2 = (device->coefficients[9] << 8) | device->coefficients[8];
+    int64_t dig_P3 = (device->coefficients[11] << 8) | device->coefficients[10];
+    int64_t dig_P4 = (device->coefficients[13] << 8) | device->coefficients[12];
+    int64_t dig_P5 = (device->coefficients[15] << 8) | device->coefficients[14];
+    int64_t dig_P6 = (device->coefficients[17] << 8) | device->coefficients[16];
+    int64_t dig_P7 = (device->coefficients[19] << 8) | device->coefficients[18];
+    int64_t dig_P8 = (device->coefficients[21] << 8) | device->coefficients[20];
+    int64_t dig_P9 = (device->coefficients[23] << 8) | device->coefficients[22];
+
+    var1 = (device->temperature * 5120.0) - 128000;
+    var2 = var1 * var1 * dig_P6;
+    var2 += ((var1 * dig_P5) << 17);
+    var2 += (dig_P4 << 35);
+    var1 = ((var1 * var1 * dig_P3) >> 8) + ((var1 * dig_P2) << 12);
+    var1 = ((((int64_t)1 << 47) + var1) * dig_P1) >> 33;
+
+    if (var1 == 0) {
+        device->pressure = 0; // Avoid division by zero
+        return;
+    }
+
     p = 1048576 - adc_p;
-    p = (p - (var2 / 4096.0)) * 6250.0 / var1;
-    var1 = ((device->coefficients[23] << 8 | device->coefficients[22]) * p * p) / 2147483648.0;
-    var2 = p * (device->coefficients[21] << 8 | device->coefficients[20]) / 32768.0;
-    device->pressure = p + (var1 + var2 + ((device->coefficients[19] << 8 | device->coefficients[18]))) / 16.0;
+    p = ((p - (var2 >> 12)) * 3125) / var1;
+    var1 = (dig_P9 * p * p) >> 13;
+    var2 = (dig_P8 * p) >> 13;
+    device->pressure = (p + ((var1 + var2 + dig_P7) >> 4)); 
 }
 
 void bmp280_read_temperature(bmp280* device) {
@@ -100,7 +116,11 @@ void bmp280_read_temperature(bmp280* device) {
     int32_t adc_t = (data[0] << 12) | (data[1] << 4) | (data[2] >> 4);
 
     int32_t var1, var2;
-    var1 = ((adc_t / 16384.0) - (device->coefficients[0] / 1024.0)) * device->coefficients[1];
-    var2 = ((adc_t / 131072.0) - (device->coefficients[0] / 8192.0)) * (adc_t / 131072.0) * device->coefficients[2];
+    int32_t dig_T1 = (device->coefficients[1] << 8) | device->coefficients[0];
+    int32_t dig_T2 = (device->coefficients[3] << 8) | device->coefficients[2];
+    int32_t dig_T3 = (device->coefficients[5] << 8) | device->coefficients[4];
+
+    var1 = ((adc_t / 16384.0) - (dig_T1 / 1024.0)) * dig_T2;
+    var2 = ((adc_t / 131072.0) - (dig_T1 / 8192.0)) * (adc_t / 131072.0) * dig_T3;
     device->temperature = (var1 + var2) / 5120.0;
 }

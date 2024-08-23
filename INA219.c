@@ -17,7 +17,6 @@ bool ina219_init(INA219 *ina219, i2c_inst_t *i2c_instance, uint8_t i2c_addr) {
 // Read a register from INA219
 uint16_t ina219_read_register(INA219 *ina219, uint8_t reg) {
     uint8_t buf[2];
-    printf("Trying to write reg: %d on addr: %d\n", reg, ina219->i2c_addr);
 
     int ret = i2c_write_blocking(ina219->i2c_instance, ina219->i2c_addr, &reg, 1, true);
     if (ret != 1) {
@@ -31,7 +30,6 @@ uint16_t ina219_read_register(INA219 *ina219, uint8_t reg) {
         printf("Failed to read reg: %d on addr: %d, ret: %d\n", reg, ina219->i2c_addr, ret);
         return 0xFFFF;  // Return an error code
     }
-    printf("Read reg: %d\n", reg);
 
     return (buf[0] << 8) | buf[1];
 }
@@ -54,9 +52,7 @@ void ina219_calibrate(INA219 *ina219, float shunt_resistor_value, float max_expe
 
 // Read voltage from the INA219 sensor
 float ina219_read_voltage(INA219 *ina219) {
-    printf("Reading voltage...\n");
     uint16_t value = ina219_read_register(ina219, INA219_REG_BUSVOLTAGE);
-    printf("Reading voltage finished...\n");
     return (value >> 3) * 0.004;
 }
 
