@@ -22,8 +22,26 @@
 #define BMP280_TEMPERATURE_REG_LOW 0xFA
 
 typedef struct {
-    double temperature;
-    double pressure;
+    // Calibration coefficients
+    uint16_t  dig_T1;
+    int16_t dig_T2;
+    int16_t dig_T3;
+    uint16_t  dig_P1;
+    int16_t dig_P2;
+    int16_t dig_P3;
+    int16_t dig_P4;
+    int16_t dig_P5;
+    int16_t dig_P6;
+    int16_t dig_P7;
+    int16_t dig_P8;
+    int16_t dig_P9;
+
+    // Temperature and pressure data
+    int32_t t_fine;
+    float temperature; // or int32_t if you prefer integer representation
+    float pressure;    // or int32_t if you prefer integer representation
+
+    // Raw calibration coefficients
     uint8_t coefficients[24];
 } bmp280;
 
