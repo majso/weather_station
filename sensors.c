@@ -111,7 +111,7 @@ SensorData sensors_read_all() {
     data.battery_power = read_power_from_ina219(&ina219_battery);
     */
     // Read solar data from INA219 sensor
-    printf("Reading solar data\n");
+    printf("Reading solar data from INA219 sensar\n");
     data.solar_voltage = read_voltage_from_ina219(&ina219_solar);
     printf("Solar voltage: %f\n", data.solar_voltage);
     data.solar_current = read_current_from_ina219(&ina219_solar);

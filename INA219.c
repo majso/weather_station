@@ -23,8 +23,7 @@ uint16_t ina219_read_register(INA219 *ina219, uint8_t reg) {
         printf("Failed to write reg: %d on addr: %d, ret: %d\n", reg, ina219->i2c_addr, ret);
         return 0xFFFF;  // Return an error code
     }
-    printf("Wrote reg: %d\n", reg);
-
+    
     ret = i2c_read_blocking(ina219->i2c_instance, ina219->i2c_addr, buf, 2, false);
     if (ret != 2) {
         printf("Failed to read reg: %d on addr: %d, ret: %d\n", reg, ina219->i2c_addr, ret);
