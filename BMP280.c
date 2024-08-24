@@ -54,7 +54,7 @@ int bmp280_init(i2c_inst_t *i2c_instance_param, uint8_t i2c_addr_param) {
         printf("BMP280 chip ID mismatch: expected 0x%02x, got 0x%02x\n", BMP280_CHIP_ID, chip_ID);
         return -1;
     }
-    printf("BMP280 chip ID match: expected 0x%02x, got 0x%02x\n", BMP280_CHIP_ID, chip_ID);
+    
     // Reset registers
     uint8_t reset_val = BMP280_RESET_VAL;
     bmp280_write_reg(BMP280_RESET_REG, 1, &reset_val);
