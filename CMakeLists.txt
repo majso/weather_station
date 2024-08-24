@@ -41,7 +41,7 @@ add_executable(weather_station
         sensors.c
         radio.c
         INA219.c
-        SHT30.c
+        SHT40.c
         BMP280.c
         nrf24l01.c
     )

@@ -2,7 +2,7 @@
 #include "hardware/gpio.h"
 #include "hardware/i2c.h"
 #include "INA219.h"
-#include "sht30.h" // Include the header file for the SHT30 sensor
+#include "sht40.h" // Include the header file for the SHT40 sensor
 #include "bmp280.h" // Include the header file for the BMP280 sensor
 #include <stdio.h>
 
@@ -47,9 +47,9 @@ void sensors_init() {
     //ina219_init(&ina219_battery, i2c0, 0x41);
     //printf("INA219 Battery sensor initialized\n");
 
-    // Initialize SHT30 sensor
-    sht30_init(I2C_BUS_INSTANCE, SHT30_I2C_ADDRESS); // Replace with your SHT30 address if different
-    printf("SHT30 sensor initialized\n");
+    // Initialize SHT40 sensor
+    sht40_init(I2C_BUS_INSTANCE, SHT40_I2C_ADDRESS); // Replace with your SHT40 address if different
+    printf("SHT40 sensor initialized\n");
     // Initialize BMP280 sensor
     bmp280_init(I2C_BUS_INSTANCE, BMP280_I2C_ADDRESS);
     bmp280_calibrate(&bmp);
@@ -73,17 +73,17 @@ float read_voltage_from_ina219(INA219 *ina219) {
     return ina219_read_voltage(ina219);
 }
 
-// Read temperature from SHT30 sensor
-float read_temperature_from_sht30() {
+// Read temperature from SHT40 sensor
+float read_temperature_from_sht40() {
     float temperature, humidity;
-    sht30_read_data(&temperature, &humidity);
+    sht40_read_data(&temperature, &humidity);
         return temperature;
 }
 
-// Read humidity from SHT30 sensor
-float read_humidity_from_sht30() {
+// Read humidity from SHT40 sensor
+float read_humidity_from_sht40() {
     float temperature, humidity;
-    sht30_read_data(&temperature, &humidity);
+    sht40_read_data(&temperature, &humidity);
         return humidity;
 }
 // Read temperature from BMP280 sensor
@@ -119,11 +119,11 @@ SensorData sensors_read_all() {
     data.solar_power = read_power_from_ina219(&ina219_solar);
     printf("Solar power: %f\n", data.solar_power);
 
-  // Read temperature and humidity from SHT30 sensor
-    printf("Reading temperature and humidity from SHT30\n");
-    data.exterior_temperature = read_temperature_from_sht30();
+  // Read temperature and humidity from SHT40 sensor
+    printf("Reading temperature and humidity from SHT40\n");
+    data.exterior_temperature = read_temperature_from_sht40();
     printf("Temperature: %f\n", data.exterior_temperature);
-    data.exterior_humidity = read_humidity_from_sht30();
+    data.exterior_humidity = read_humidity_from_sht40();
     printf("Humidity: %f\n", data.exterior_humidity);
 
     // Read temperature and pressure from BMP280
