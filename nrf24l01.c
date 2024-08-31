@@ -1,4 +1,5 @@
 #include "nrf24l01.h"
+#include "radio.h"
 #include "pico/stdlib.h" // For Pico-specific functions like sleep_ms
 #include "hardware/spi.h"
 #include "hardware/gpio.h"
@@ -170,11 +171,11 @@ bool nrf24l01_init(nrf24l01_device *device) {
         return false; // Initialization failed
     }
     
-    nrf24l01_write_register(NRF24L01_REG_EN_AA, 0x00); // Disable auto-acknowledgment
+    nrf24l01_write_register(NRF24L01_REG_EN_AA, 0x01); // Enable auto-acknowledgment
     nrf24l01_write_register(NRF24L01_REG_EN_RXADDR, 0x01); // Enable RX pipe 0
     nrf24l01_write_register(NRF24L01_REG_SETUP_AW, 0x03); // 5-byte address width
     nrf24l01_write_register(NRF24L01_REG_SETUP_RETR, 0x03); // 1000us, 5 retransmits
-    nrf24l01_write_register(NRF24L01_REG_RF_CH, 76); // Channel 76
+    nrf24l01_write_register(NRF24L01_REG_RF_CH, 0x00); // Channel 0
     nrf24l01_write_register(NRF24L01_REG_RF_SETUP, 0x02); // 1Mbps, 0dBm
     nrf24l01_write_register(NRF24L01_REG_STATUS, 0x70); // Clear interrupts
 
@@ -191,30 +192,44 @@ void nrf24l01_set_rx_address(nrf24l01_device *device, const uint8_t *address) {
     nrf24l01_write_registers(NRF24L01_REG_RX_ADDR_P0, address, 5);
 }
 
-void nrf24l01_set_tx_address(nrf24l01_device *device, const uint8_t *address) {
+void nrf24l01_set_tx_address(nrf24l01_device *device,  const uint8_t *address) {
     nrf24l01_write_registers(NRF24L01_REG_TX_ADDR, address, 5);
 }
 
 bool nrf24l01_send(nrf24l01_device *device, const uint8_t *data, uint8_t length) {
-    if (length > 32) {
+    if (length > MAX_PAYLOAD_SIZE) {
         printf("Error: Data length exceeds maximum payload size\n");
         return false;
     }
 
+    printf("Sending data...\n");
+    nrf24l01_power_up_tx(device);
+    gpio_put(NRF24L01_CE_PIN, 1); // Set CE high to start TX
+
+    // Send data
     gpio_put(NRF24L01_CS_PIN, 0); // Select the NRF24L01
-    uint8_t tx_command = NRF24L01_CMD_W_REGISTER | 0xA0; // Write to TX payload
-    spi_write_blocking(spi0, &tx_command, 1); // Send command to write to TX payload
-    spi_write_blocking(spi0, data, length); // Send the data
+    uint8_t tx_command = NRF24L01_CMD_W_TX_PAYLOAD; // Write TX payload
+    printf("TX command: 0x%02X\n", tx_command);
+    spi_write_blocking(spi0, &tx_command, 1); // Send command
+    printf("TX data: 0x%02X\n with length: %d\n", data, length);
+    spi_write_blocking(spi0, data, length); // Send data
     gpio_put(NRF24L01_CS_PIN, 1); // Deselect the NRF24L01
 
-    // Wait for transmission to complete
-    sleep_ms(2); // Adjust delay as necessary
+    gpio_put(NRF24L01_CE_PIN, 0); // Set CE low to end TX
 
-    // Check if data has been transmitted
+    // Wait for transmission to complete
+    sleep_ms(10); // Adjust based on timing needs
+    printf("Transmission compelete with status: 0x%02X\n", nrf24l01_read_register(NRF24L01_REG_STATUS));
+    // Check the status register
     uint8_t status = nrf24l01_read_register(NRF24L01_REG_STATUS);
     if (status & (1 << 5)) { // TX_DS (data sent) bit
         printf("Data sent successfully\n");
+        nrf24l01_write_register(NRF24L01_REG_STATUS, status | (1 << 5)); // Clear TX_DS flag
         return true;
+    } else if (status & (1 << 4)) { // MAX_RT (maximum retries) bit
+        printf("Transmission failed, MAX_RT set. STATUS register: 0x%02X\n", status);
+        nrf24l01_write_register(NRF24L01_REG_STATUS, status | (1 << 4)); // Clear MAX_RT flag
+        return false;
     } else {
         printf("Transmission error, STATUS register: 0x%02X\n", status);
         return false;

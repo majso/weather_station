@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 
-#define MAX_PAYLOAD_SIZE 32
+#define MAX_PAYLOAD_SIZE 8
 
 // Initialize the radio module
 void radio_init();

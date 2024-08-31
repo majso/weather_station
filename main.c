@@ -22,11 +22,12 @@ int main()
         // Initialize sensors and radio
         printf("Sensors starting..\n");
         sensors_init();
-    }   
+    }  else {
+         radio_switch_mode(false); // Set to RX mode
+    }
 
     while (true) {
      if (is_transmitting) {
-        radio_switch_mode(true); // Set to TX mode
         // Read sensor data
         printf("Reading sensors...\n");
         SensorData sensor_data  = sensors_read_all();
@@ -38,8 +39,6 @@ int main()
         // Delay between readings
         sleep_ms(10000);
      } else {
-            radio_switch_mode(false); // Set to RX mode
-
             SensorData received_data;
             if (radio_receive_data(&received_data)) {
                 printf("Received data:\n");
