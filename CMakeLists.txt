@@ -43,11 +43,11 @@ add_executable(weather_station
         INA219.c
         SHT40.c
         BMP280.c
-        nrf24l01.c
+        cc1101.c
     )
 
 pico_set_program_name(weather_station "weather_station")
-pico_set_program_version(weather_station "0.1")
+pico_set_program_version(weather_station "0.2")
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(weather_station 1)

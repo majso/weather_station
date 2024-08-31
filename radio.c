@@ -1,80 +1,85 @@
-#include "nrf24l01.h" // Include the NRF24L01 library
+#include "cc1101.h"
 #include "radio.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
-#include <string.h>    // For memcpy
-#include <stdbool.h> // For bool type
 #include "pico/stdlib.h"
 #include <stdio.h>
-
-static nrf24l01_device radio_device;
+#include <string.h>
 
 // Initialize the radio module
 void radio_init() {
-    if (!nrf24l01_init(&radio_device)) {
-        printf("Error initializing NRF24L01 radio\n");
-        // Handle the error (e.g., reset the device, retry, etc.)
-    } else {
-        printf("NRF24L01 radio initialized successfully\n");
+    // Initialize the CC1101 module
+    cc1101_init();
+    
+    // Configure CC1101 registers as needed
+    cc1101_write_reg(CC1101_IOCFG0, 0x06);  // Configure GDO0 pin as packet received signal
+    cc1101_write_reg(CC1101_FREQ2, 0x21);   // Set frequency to a specific value
+    cc1101_write_reg(CC1101_FREQ1, 0x65);
+    cc1101_write_reg(CC1101_FREQ0, 0x6A);
+    cc1101_write_reg(CC1101_MDMCFG4, 0x8C); // Set data rate and bandwidth
+    cc1101_write_reg(CC1101_MDMCFG3, 0x22);
+    cc1101_write_reg(CC1101_MDMCFG2, 0x02); // Set modulation format (GFSK)
+    cc1101_write_reg(CC1101_PKTCTRL1, 0x04);// Enable automatic packet handling
+    cc1101_write_reg(CC1101_PKTCTRL0, 0x05);// Enable CRC and variable length mode
+}
+
+// Helper function to convert SensorData to byte array
+static void sensor_data_to_bytes(const SensorData *data, uint8_t *buffer, uint8_t *length) {
+    // Use memcpy to pack floats into the byte array
+    uint8_t index = 0;
+    
+    memcpy(&buffer[index], &data->temperature, sizeof(float)); index += sizeof(float);
+    memcpy(&buffer[index], &data->pressure, sizeof(float)); index += sizeof(float);
+    memcpy(&buffer[index], &data->exterior_temperature, sizeof(float)); index += sizeof(float);
+    memcpy(&buffer[index], &data->exterior_humidity, sizeof(float)); index += sizeof(float);
+    memcpy(&buffer[index], &data->battery_voltage, sizeof(float)); index += sizeof(float);
+    memcpy(&buffer[index], &data->battery_current, sizeof(float)); index += sizeof(float);
+    memcpy(&buffer[index], &data->battery_power, sizeof(float)); index += sizeof(float);
+    memcpy(&buffer[index], &data->solar_voltage, sizeof(float)); index += sizeof(float);
+    memcpy(&buffer[index], &data->solar_current, sizeof(float)); index += sizeof(float);
+    memcpy(&buffer[index], &data->solar_power, sizeof(float)); index += sizeof(float);
+    
+    *length = index; // Total length of the data packet
+}
+
+// Helper function to convert byte array to SensorData
+static void bytes_to_sensor_data(const uint8_t *buffer, uint8_t length, SensorData *data) {
+    if (length >= sizeof(SensorData)) {
+        uint8_t index = 0;
+        
+        memcpy(&data->temperature, &buffer[index], sizeof(float)); index += sizeof(float);
+        memcpy(&data->pressure, &buffer[index], sizeof(float)); index += sizeof(float);
+        memcpy(&data->exterior_temperature, &buffer[index], sizeof(float)); index += sizeof(float);
+        memcpy(&data->exterior_humidity, &buffer[index], sizeof(float)); index += sizeof(float);
+        memcpy(&data->battery_voltage, &buffer[index], sizeof(float)); index += sizeof(float);
+        memcpy(&data->battery_current, &buffer[index], sizeof(float)); index += sizeof(float);
+        memcpy(&data->battery_power, &buffer[index], sizeof(float)); index += sizeof(float);
+        memcpy(&data->solar_voltage, &buffer[index], sizeof(float)); index += sizeof(float);
+        memcpy(&data->solar_current, &buffer[index], sizeof(float)); index += sizeof(float);
+        memcpy(&data->solar_power, &buffer[index], sizeof(float)); index += sizeof(float);
     }
 }
 
 // Send sensor data using the radio module
 void radio_send_data(const SensorData *data) {
-    if (data == NULL) {
-        printf("No data to send\n");
-        return;
-    }
-
-    uint8_t data_bytes[sizeof(SensorData)];
-    memcpy(data_bytes, data, sizeof(SensorData));
-
-    size_t total_length = sizeof(data_bytes);
-    size_t offset = 0;
-
-    while (offset < total_length) {
-        size_t chunk_size = (total_length - offset > MAX_PAYLOAD_SIZE) ? MAX_PAYLOAD_SIZE : (total_length - offset);
-        
-        // Send the data chunk
-        if (!nrf24l01_send(&radio_device, data_bytes + offset, chunk_size)) {
-            printf("Failed to send data chunk of size %zu bytes\n", chunk_size);
-        } else {
-            printf("Successfully sent data chunk of size %zu bytes\n", chunk_size);
-        }
-
-        offset += chunk_size;
-
-        // Wait for the transmission to complete
-        sleep_ms(10); // Adjust this delay based on your requirements
-    }
+    uint8_t buffer[64];
+    uint8_t length;
+    
+    // Convert SensorData to byte array
+    sensor_data_to_bytes(data, buffer, &length);
+    
+    // Send the data using CC1101
+    cc1101_send_data(buffer, length);
 }
 
 // Receive sensor data using the radio module
-bool radio_receive_data(SensorData *data) {
-    uint8_t data_bytes[sizeof(SensorData)];
-    uint8_t length = sizeof(data_bytes);
-    size_t offset = 0;
-
-    while (offset < sizeof(data_bytes)) {
-        if (!nrf24l01_receive(&radio_device, data_bytes + offset, &length)) {
-            printf("Failed to receive data chunk\n");
-            return false;
-        }
-        offset += length;
-        sleep_ms(10); // Short delay to avoid collision and buffer overflow
-    }
-
-    memcpy(data, data_bytes, sizeof(SensorData));
-    return true;
-}
-
-// Switch between TX and RX modes
-void radio_switch_mode(bool is_transmitting) {
-    if (is_transmitting) {
-        nrf24l01_power_up_tx(&radio_device);
-        gpio_put(NRF24L01_CE_PIN, 1); // Set CE high to start TX mode
-    } else {
-        nrf24l01_power_up_rx(&radio_device);
-        gpio_put(NRF24L01_CE_PIN, 1); // Set CE high to start RX mode
-    }
+void radio_receive_data(SensorData *data) {
+    uint8_t buffer[64];
+    uint8_t length = sizeof(buffer);
+    
+    // Receive data from CC1101
+    cc1101_receive_data(buffer, length);
+    
+    // Convert received bytes to SensorData
+    bytes_to_sensor_data(buffer, length, data);
 }
