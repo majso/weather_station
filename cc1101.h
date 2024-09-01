@@ -5,10 +5,11 @@
 #include <stdbool.h>
 
 // SPI 
-#define CC1101_CS_PIN     5  // Pin  Chip Select
-#define CC1101_SCLK_PIN   2  // Pin  SPI Clock
-#define CC1101_MOSI_PIN   3  // Pin  MOSI
-#define CC1101_MISO_PIN   4  // Pin  MISO
+#define CC1101_CS_PIN     5   //Orange Chip Select (CS) pin (GPIO 5)
+#define CC1101_CE_PIN     3   //Yellow Chip Enable (CE) pin (GPIO 3)
+#define CC1101_SCLK_PIN   6   //Blue SPI Clock (SCK) pin (GPIO 6)
+#define CC1101_MOSI_PIN   7   //Green SPI Master Out Slave In (MOSI) pin (GPIO 7)
+#define CC1101_MISO_PIN   4   //Purple SPI Master In Slave Out (MISO) pin (GPIO 4)
 
 // CC1101 Command Strobes
 #define CC1101_SRES          0x30  // Reset chip
