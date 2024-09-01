@@ -14,7 +14,7 @@ void cc1101_init(void) {
     gpio_put(CC1101_CS_PIN, 1);  // CS high
     gpio_init(CC1101_GDO0_PIN);
     gpio_set_dir(CC1101_GDO0_PIN, GPIO_IN);
-    
+
     cc1101_reset();
 }
 
@@ -57,27 +57,19 @@ void cc1101_read_burst(uint8_t addr, uint8_t* buffer, uint8_t length) {
     gpio_put(CC1101_CS_PIN, 1);  // CS high
 }
 
+// Function to send data using the TX FIFO
 void cc1101_send_data(uint8_t* data, uint8_t length) {
     // Write data to FIFO
-    cc1101_strobe(0x35);  // Strobe TX
-    
-    gpio_put(CC1101_CS_PIN, 0);  // CS low
-    
-    uint8_t addr = 0x7F;  // FIFO write address
-    spi_write_blocking(spi0, &addr, 1);
-    spi_write_blocking(spi0, data, length);
-    
-    gpio_put(CC1101_CS_PIN, 1);  // CS high
+    cc1101_write_burst(CC1101_TXFIFO_BURST, data, length);
+
+    // Set the CC1101 to TX mode to send the data
+    cc1101_strobe(CC1101_STX);
 }
 
+// Function to receive data using the RX FIFO
 void cc1101_receive_data(uint8_t* buffer, uint8_t length) {
-    gpio_put(CC1101_CS_PIN, 0);  // CS low
-    
-    uint8_t addr = 0xFF;  // FIFO read address
-    spi_write_blocking(spi0, &addr, 1);
-    spi_read_blocking(spi0, 0x00, buffer, length);
-    
-    gpio_put(CC1101_CS_PIN, 1);  // CS high
+    // Read the data from the RX FIFO
+    cc1101_read_burst(CC1101_RXFIFO_BURST, buffer, length);
 }
 
 void cc1101_strobe(uint8_t strobe) {
