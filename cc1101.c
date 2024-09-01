@@ -25,6 +25,14 @@ void cc1101_write_reg(uint8_t addr, uint8_t value) {
     gpio_put(CC1101_CS_PIN, 1);  // CS high
 }
 
+void cc1101_write_burst(uint8_t addr, uint8_t* data, uint8_t length) {
+    addr |= 0x40;  // Burst mode bit set (bit 6)
+    gpio_put(CC1101_CS_PIN, 0);  // CS low
+    spi_write_blocking(spi0, &addr, 1);  // Write address with burst mode
+    spi_write_blocking(spi0, data, length);  // Write data bytes
+    gpio_put(CC1101_CS_PIN, 1);  // CS high
+}
+
 uint8_t cc1101_read_reg(uint8_t addr) {
     uint8_t result;
     addr |= 0x80; 
@@ -37,6 +45,14 @@ uint8_t cc1101_read_reg(uint8_t addr) {
     gpio_put(CC1101_CS_PIN, 1);  // CS high
     
     return result;
+}
+
+void cc1101_read_burst(uint8_t addr, uint8_t* buffer, uint8_t length) {
+    addr |= 0xC0;  // Burst mode bit set (bit 6) and read bit set (bit 7)
+    gpio_put(CC1101_CS_PIN, 0);  // CS low
+    spi_write_blocking(spi0, &addr, 1);  // Write address with burst mode
+    spi_read_blocking(spi0, 0x00, buffer, length);  // Read data bytes into buffer
+    gpio_put(CC1101_CS_PIN, 1);  // CS high
 }
 
 void cc1101_send_data(uint8_t* data, uint8_t length) {

@@ -1,7 +1,6 @@
 #include "cc1101.h"
 #include "radio.h"
 #include "hardware/gpio.h"
-#include "hardware/spi.h"
 #include "pico/stdlib.h"
 #include <stdio.h>
 #include <string.h>
@@ -60,7 +59,6 @@ static void bytes_to_sensor_data(const uint8_t *buffer, uint8_t length, SensorDa
     }
 }
 
-// Send sensor data using the radio module
 void radio_send_data(const SensorData *data) {
     uint8_t buffer[64];
     uint8_t length;
@@ -68,18 +66,46 @@ void radio_send_data(const SensorData *data) {
     // Convert SensorData to byte array
     sensor_data_to_bytes(data, buffer, &length);
     
-    // Send the data using CC1101
-    cc1101_send_data(buffer, length);
+    // Set the CC1101 to IDLE mode
+    cc1101_strobe(CC1101_SIDLE);
+
+    // Write the data to the TX FIFO
+    cc1101_write_burst(CC1101_TXFIFO_BURST, buffer, length);
+
+    // Set the CC1101 to TX mode to send the data
+    cc1101_strobe(CC1101_STX);
+
+    // Wait for transmission to complete (GDO0 goes high)
+    while (!gpio_get(CC1101_GDO0_PIN));
+
+    // Optionally, wait until the TX FIFO is empty (GDO0 goes low again)
+    while (gpio_get(CC1101_GDO0_PIN));
 }
 
-// Receive sensor data using the radio module
 void radio_receive_data(SensorData *data) {
-    uint8_t buffer[64];
-    uint8_t length = sizeof(buffer);
-    
-    // Receive data from CC1101
-    cc1101_receive_data(buffer, length);
-    
-    // Convert received bytes to SensorData
-    bytes_to_sensor_data(buffer, length, data);
+    uint8_t buffer[sizeof(SensorData)] = {0};
+
+    // Set the CC1101 to RX mode
+    cc1101_strobe(CC1101_SRX);
+
+    // Wait until a packet is received (GDO0 goes high)
+    while (!gpio_get(CC1101_GDO0_PIN));
+
+    // Read the data from the RX FIFO
+    cc1101_read_burst(CC1101_RXFIFO_BURST, buffer, sizeof(SensorData));
+
+    // Convert the received buffer into a SensorData struct
+    memcpy(data, buffer, sizeof(SensorData));
+
+    // Print the received data
+    printf("Temperature: %.2f°C\n", data->temperature);
+    printf("Pressure: %.2f hPa\n", data->pressure);
+    printf("Exterior Temperature: %.2f°C\n", data->exterior_temperature);
+    printf("Exterior Humidity: %.2f%%\n", data->exterior_humidity);
+    printf("Battery Voltage: %.2fV\n", data->battery_voltage);
+    printf("Battery Current: %.2fA\n", data->battery_current);
+    printf("Battery Power: %.2fW\n", data->battery_power);
+    printf("Solar Voltage: %.2fV\n", data->solar_voltage);
+    printf("Solar Current: %.2fA\n", data->solar_current);
+    printf("Solar Power: %.2fW\n", data->solar_power);
 }
