@@ -12,6 +12,10 @@ void cc1101_init(void) {
     gpio_init(CC1101_CS_PIN);
     gpio_set_dir(CC1101_CS_PIN, GPIO_OUT);
     gpio_put(CC1101_CS_PIN, 1);  // CS high
+    gpio_init(CC1101_GDO0_PIN);
+    gpio_set_dir(CC1101_GDO0_PIN, GPIO_OUT);
+    gpio_put(CC1101_GDO0_PIN, 0);
+    
     
     cc1101_reset();
 }
