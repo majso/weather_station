@@ -28,7 +28,7 @@ void radio_init() {
     // address matches the configured address (if address filtering is enabled).
     // If the address doesn’t match, the packet will be discarded, but this won’t affect 
     // the initial sync word detection signal from GDO0.
-    cc1101_write_reg(CC1101_PKTCTRL1, 0x0F); // Enable address filtering
+    cc1101_write_reg(CC1101_PKTCTRL1, 0x05); // Enable address filtering, no auto Flush
     cc1101_write_reg(CC1101_PKTCTRL0, 0x45); // Enable CRC and variable length mode
     // Sync word configuration
     // The SYNC_DETECT function is designed to trigger an interrupt when the sync word 
@@ -97,9 +97,6 @@ void radio_send_data(const SensorData *data) {
     uint8_t buffer[64];
     uint8_t length;
 
-    // Set the CC1101 to IDLE mode
-    cc1101_strobe(CC1101_SIDLE);
-
     // Convert SensorData to byte array
     sensor_data_to_bytes(data, buffer, &length);
 
@@ -109,6 +106,10 @@ void radio_send_data(const SensorData *data) {
     // Write the data to the TX FIFO
     cc1101_send_data(buffer, length);
 
+    while (!gpio_get(CC1101_GDO0_PIN)) {
+        printf("Waiting for GDO0 to go high (packet transmission in progress)...\n");
+        sleep_ms(1000); // Small delay to avoid flooding the console
+    }
     // Optionally, wait until the TX FIFO is empty (GDO0 goes low again)
     while (gpio_get(CC1101_GDO0_PIN)) {
         printf("Waiting for GDO0 to go low (TX FIFO empty)...\n");
