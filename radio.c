@@ -11,7 +11,7 @@ void radio_init() {
     cc1101_init();
     
     // Configure CC1101 registers as needed
-    cc1101_write_reg(CC1101_IOCFG0, 0x06);  // Configure GDO0 pin as packet received signal
+    cc1101_write_reg(CC1101_IOCFG0, 0x06);  // Configure GDO0 pin as FIFO is not empty
     cc1101_write_reg(CC1101_CHANNR, 0x00);  // Set channel
     cc1101_write_reg(CC1101_FREQ2, 0x21);   // Set frequency to a specific value
     cc1101_write_reg(CC1101_FREQ1, 0x65);
@@ -97,24 +97,17 @@ void radio_send_data(const SensorData *data) {
     uint8_t buffer[64];
     uint8_t length;
 
+    // Set the CC1101 to IDLE mode
+    cc1101_strobe(CC1101_SIDLE);
+
     // Convert SensorData to byte array
     sensor_data_to_bytes(data, buffer, &length);
 
-    // Flush TX FIFO before sending data
-    cc1101_strobe(0x3B);  // SFTX strobe
-
-    // Set the CC1101 to TX mode to send the data
-    cc1101_strobe(CC1101_STX);
+     // Check the initial state of GDO0
+    printf("Initial GDO0 state: %d\n", gpio_get(CC1101_GDO0_PIN));
 
     // Write the data to the TX FIFO
     cc1101_send_data(buffer, length);
-
-    // Wait for transmission to complete (GDO0 goes high)
-    while (!gpio_get(CC1101_GDO0_PIN)) {
-        printf("Waiting for GDO0 to go high (transmission in progress)...\n");
-        sleep_ms(100); // Small delay to avoid flooding the console
-    }
-    printf("GDO0 is high (transmission complete).\n");
 
     // Optionally, wait until the TX FIFO is empty (GDO0 goes low again)
     while (gpio_get(CC1101_GDO0_PIN)) {
@@ -130,11 +123,8 @@ void radio_send_data(const SensorData *data) {
 void radio_receive_data(SensorData *data) {
     uint8_t buffer[sizeof(SensorData)] = {0};
 
-   // Flush RX FIFO before receiving data
-    cc1101_strobe(0x3A);  // SFRX strobe
-
-    // Set the CC1101 to RX mode
-    cc1101_strobe(CC1101_SRX);
+     // Set the CC1101 to IDLE mode
+    cc1101_strobe(CC1101_SIDLE);
 
      // Check the initial state of GDO0
     printf("Initial GDO0 state: %d\n", gpio_get(CC1101_GDO0_PIN));
@@ -148,9 +138,6 @@ void radio_receive_data(SensorData *data) {
 
     // Read the data from the RX FIFO
     cc1101_receive_data(buffer, sizeof(SensorData));
-
-   // Flush RX FIFO after receiving data
-    cc1101_strobe(0x3A);  // SFRX strobe
 
     printf("Final GDO0 state: %d\n", gpio_get(CC1101_GDO0_PIN));
 

@@ -63,22 +63,34 @@ void cc1101_read_burst(uint8_t addr, uint8_t* buffer, uint8_t length) {
 
 // Function to send data using the TX FIFO
 void cc1101_send_data(uint8_t* data, uint8_t length) {
+    // Flush TX FIFO before sending data
+    cc1101_strobe(CC1101_SFTX);  // SFTX strobe
     // Write data to FIFO
     cc1101_write_burst(CC1101_TXFIFO_BURST, data, length);
+     // Set the CC1101 to TX mode to send the data
+    cc1101_strobe(CC1101_STX);
+    // Flush TX FIFO after sending data
+    cc1101_strobe(CC1101_SFTX);  // SFTX strobe
 }
 
 // Function to receive data using the RX FIFO
 void cc1101_receive_data(uint8_t* buffer, uint8_t length) {
+    // Flush RX FIFO before receiving data
+    cc1101_strobe(CC1101_SFRX);  // SFRX strobe
+    // Set the CC1101 to RX mode
+    cc1101_strobe(CC1101_SRX);
     // Read the data from the RX FIFO
     cc1101_read_burst(CC1101_RXFIFO_BURST, buffer, length);
+    // Flush RX FIFO after receiving data
+    cc1101_strobe(CC1101_SFRX);  // SFRX strobe
 }
 
 void cc1101_strobe(uint8_t strobe) {
     gpio_put(CC1101_CS_PIN, 0);  // CS low
-    
+    sleep_ms(10);
     spi_write_blocking(spi0, &strobe, 1);
-    
     gpio_put(CC1101_CS_PIN, 1);  // CS high
+    sleep_ms(10);
 }
 
 void cc1101_reset(void) {
@@ -86,6 +98,6 @@ void cc1101_reset(void) {
     sleep_ms(10);
     gpio_put(CC1101_CS_PIN, 1);
     sleep_ms(10);
-    
-    cc1101_strobe(0x30);  // Strobe SRES (reset)
+    // Reset the CC1101
+    cc1101_strobe(CC1101_SRES);  // Strobe SRES (reset)
 }
