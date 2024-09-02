@@ -69,8 +69,6 @@ void cc1101_send_data(uint8_t* data, uint8_t length) {
     cc1101_write_burst(CC1101_TXFIFO_BURST, data, length);
      // Set the CC1101 to TX mode to send the data
     cc1101_strobe(CC1101_STX);
-    // Flush TX FIFO after sending data
-    cc1101_strobe(CC1101_SFTX);  // SFTX strobe
 }
 
 // Function to receive data using the RX FIFO
@@ -81,8 +79,6 @@ void cc1101_receive_data(uint8_t* buffer, uint8_t length) {
     cc1101_strobe(CC1101_SRX);
     // Read the data from the RX FIFO
     cc1101_read_burst(CC1101_RXFIFO_BURST, buffer, length);
-    // Flush RX FIFO after receiving data
-    cc1101_strobe(CC1101_SFRX);  // SFRX strobe
 }
 
 void cc1101_strobe(uint8_t strobe) {

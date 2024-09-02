@@ -29,7 +29,7 @@ void radio_init() {
     // If the address doesn’t match, the packet will be discarded, but this won’t affect 
     // the initial sync word detection signal from GDO0.
     cc1101_write_reg(CC1101_PKTCTRL1, 0x0F); // Enable address filtering
-    cc1101_write_reg(CC1101_PKTCTRL0, 0x05); // Enable CRC and variable length mode
+    cc1101_write_reg(CC1101_PKTCTRL0, 0x45); // Enable CRC and variable length mode
     // Sync word configuration
     // The SYNC_DETECT function is designed to trigger an interrupt when the sync word 
     // has been detected in a packet. This means that the GDO0 pin will go high when the 
