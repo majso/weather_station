@@ -55,6 +55,7 @@ void cc1101_read_burst(uint8_t addr, uint8_t* buffer, uint8_t length) {
 
 // Function to send data using the TX FIFO
 void cc1101_send_data(uint8_t* data, uint8_t length) {
+    // Set the CC1101 to IDLE mode
     cc1101_strobe(CC1101_SIDLE);
     // Flush TX FIFO before sending data
     cc1101_strobe(CC1101_SFTX);  // SFTX strobe

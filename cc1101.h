@@ -68,6 +68,23 @@
 #define CC1101_FSCAL0        0x26  // Frequency synthesizer calibration
 #define CC1101_RCCTRL1       0x27  // RC oscillator configuration
 #define CC1101_RCCTRL0       0x28  // RC oscillator configuration
+#define CC1101_FSTEST        0x29  // Frequency synthesizer test
+#define CC1101_PTEST         0x2A  // Preamble test
+#define CC1101_AGCTEST       0x2B  // AGC test
+#define CC1101_TEST2         0x2C  // Various test settings
+#define CC1101_TEST1         0x2D  // Various test settings
+#define CC1101_PARTNUM       0x30  // Part number
+#define CC1101_VERSION       0x31  // Current version number
+#define CC1101_FREQEST       0x32  // Frequency offset estimate
+#define CC1101_LQI           0x33  // Demodulator LQI
+#define CC1101_RSSI          0x34  // RSSI value
+#define CC1101_MARCSTATE     0x35  // Control state machine state
+#define CC1101_WORTIME1      0x36  // High byte of WOR timer
+#define CC1101_WORTIME0      0x37  // Low byte of WOR timer
+#define CC1101_PKTSTATUS     0x38  // Current GDOx status and auto RSSI threshold flag
+#define CC1101_VCO_VC_DAC    0x39  // VCO power control
+#define CC1101_TXBYTES       0x3A  // Underflow and number of bytes
+#define CC1101_RXBYTES       0x3B  // Underflow and number of bytes
 
 #define CC1101_TXFIFO_SINGLE_BYTE 0x3F  // Single byte access to TX FIFO
 #define CC1101_TXFIFO_BURST 0x7F       // Burst access to TX FIFO

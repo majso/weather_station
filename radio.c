@@ -13,23 +13,29 @@ void radio_init() {
     // Configure CC1101 registers as needed
     cc1101_write_reg(CC1101_IOCFG0, 0x06);  // Configure GDO0 pin as FIFO is not empty
     cc1101_write_reg(CC1101_CHANNR, 0x00);  // Set channel
-    cc1101_write_reg(CC1101_FREQ2, 0x21);   // Set frequency to a specific value
-    cc1101_write_reg(CC1101_FREQ1, 0x65);
-    cc1101_write_reg(CC1101_FREQ0, 0x6A);
+    //FREQREG=​FREQ×2^16​/fXOSC
+    //433 × 2^16 ÷ 26
+    cc1101_write_reg(CC1101_FREQ2, 0x10);   // Set frequency to a specific value
+    cc1101_write_reg(CC1101_FREQ1, 0xA7);
+    cc1101_write_reg(CC1101_FREQ0, 0x62);
     //MDMCFG2:
     //0 DC blocking
     //001 GFSK
     //0 Menchester
     //010 16/16 sync word has to match
     cc1101_write_reg(CC1101_MDMCFG2, 0x12); // Set modulation format (GFSK)
+    cc1101_write_reg(CC1101_MDMCFG4, 0xCA); // Set baut rate to 38kbps
+    cc1101_write_reg(CC1101_DEVIATN, 0x35);
     // Set packet control:
     // Address filtering is handled separately from sync word detection. After detecting a 
     // sync word and pulling GDO0 high, the CC1101 will still need to check if the packet’s 
     // address matches the configured address (if address filtering is enabled).
     // If the address doesn’t match, the packet will be discarded, but this won’t affect 
     // the initial sync word detection signal from GDO0.
-    cc1101_write_reg(CC1101_PKTCTRL1, 0x05); // Enable address filtering, no auto Flush
+    cc1101_write_reg(CC1101_PKTLEN, 0x3D); // 61 bytes
+    cc1101_write_reg(CC1101_PKTCTRL1, 0xFF); // Enable address filtering, auto Flush
     cc1101_write_reg(CC1101_PKTCTRL0, 0x45); // Enable CRC and variable length mode
+    cc1101_write_reg(CC1101_MCSM1,0x30); // CCA enabled TX->IDLE RX->IDLE
     // Sync word configuration
     // The SYNC_DETECT function is designed to trigger an interrupt when the sync word 
     // has been detected in a packet. This means that the GDO0 pin will go high when the 
@@ -116,9 +122,6 @@ void radio_send_data(const SensorData *data) {
         sleep_ms(100); // Small delay to avoid flooding the console
     }
     printf("GDO0 is low (TX FIFO empty).\n");
-
-    // Set the CC1101 to IDLE mode
-    cc1101_strobe(CC1101_SIDLE);
 }
 
 void radio_receive_data(SensorData *data) {
@@ -168,7 +171,4 @@ void radio_receive_data(SensorData *data) {
     printf("Solar Voltage: %.2fV\n", data->solar_voltage);
     printf("Solar Current: %.2fA\n", data->solar_current);
     printf("Solar Power: %.2fW\n", data->solar_power);
-
-     // Set the CC1101 to IDLE mode
-    cc1101_strobe(CC1101_SIDLE);
 }
