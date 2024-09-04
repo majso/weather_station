@@ -18,6 +18,7 @@ void radio_init() {
     cc1101_write_reg(CC1101_FREQ2, 0x10);   // Set frequency to a specific value
     cc1101_write_reg(CC1101_FREQ1, 0xA7);
     cc1101_write_reg(CC1101_FREQ0, 0x62);
+    cc1101_write_reg(CC1101_MDMCFG1, 0x40); //8 byte preamble
     //MDMCFG2:
     //0 DC blocking
     //001 GFSK
@@ -75,7 +76,7 @@ static void sensor_data_to_bytes(const SensorData *data, uint8_t *buffer, uint8_
 // Helper function to convert byte array to SensorData
 static void bytes_to_sensor_data(const uint8_t *buffer, uint8_t length, SensorData *data) {
     if (length >= sizeof(SensorData)) {
-        uint8_t index = 0;
+        uint8_t index = 1;
         
         memcpy(&data->temperature, &buffer[index], sizeof(float)); index += sizeof(float);
         memcpy(&data->pressure, &buffer[index], sizeof(float)); index += sizeof(float);
@@ -100,7 +101,7 @@ void print_binary(const uint8_t *buffer, size_t length) {
 }
 
 void radio_send_data(const SensorData *data) {
-    uint8_t buffer[64];
+    uint8_t buffer[64] = {0};;
     uint8_t length;
 
     // Convert SensorData to byte array
@@ -145,30 +146,33 @@ void radio_receive_data(SensorData *data) {
 
     printf("Final GDO0 state: %d\n", gpio_get(CC1101_GDO0_PIN));
 
-    // Print the entire packet in binary format
-    printf("Received packet in binary: ");
-    print_binary(buffer, sizeof(SensorData));
-
-    uint8_t received_address = buffer[0];
-    uint8_t expected_address = cc1101_read_reg(CC1101_ADDR);
-
-    if (received_address != expected_address) {
-        printf("Packet rejected: Address mismatch. Received address: 0x%02X\n", received_address);
-        return;
+    // Check if buffer is cleared (all zeros)
+    bool buffer_cleared = true;
+    for (int i = 0; i < sizeof(SensorData); i++) {
+        if (buffer[i] != 0) {
+            buffer_cleared = false;
+            break;
+        }
     }
 
-    // Convert the received buffer into a SensorData struct
-    bytes_to_sensor_data(buffer, sizeof(SensorData), data);
+    if (!buffer_cleared) {
+        // Print the entire packet in binary format
+        printf("Received packet in binary: ");
+        print_binary(buffer, sizeof(SensorData));
 
-    // Print the received data
-    printf("Temperature: %.2f°C\n", data->temperature);
-    printf("Pressure: %.2f hPa\n", data->pressure);
-    printf("Exterior Temperature: %.2f°C\n", data->exterior_temperature);
-    printf("Exterior Humidity: %.2f%%\n", data->exterior_humidity);
-    printf("Battery Voltage: %.2fV\n", data->battery_voltage);
-    printf("Battery Current: %.2fA\n", data->battery_current);
-    printf("Battery Power: %.2fW\n", data->battery_power);
-    printf("Solar Voltage: %.2fV\n", data->solar_voltage);
-    printf("Solar Current: %.2fA\n", data->solar_current);
-    printf("Solar Power: %.2fW\n", data->solar_power);
+        // Convert the received buffer into a SensorData struct
+        bytes_to_sensor_data(buffer, sizeof(SensorData), data);
+
+        // Print the received data
+        printf("Temperature: %.2f°C\n", data->temperature);
+        printf("Pressure: %.2f hPa\n", data->pressure);
+        printf("Exterior Temperature: %.2f°C\n", data->exterior_temperature);
+        printf("Exterior Humidity: %.2f%%\n", data->exterior_humidity);
+        printf("Battery Voltage: %.2fV\n", data->battery_voltage);
+        printf("Battery Current: %.2fA\n", data->battery_current);
+        printf("Battery Power: %.2fW\n", data->battery_power);
+        printf("Solar Voltage: %.2fV\n", data->solar_voltage);
+        printf("Solar Current: %.2fA\n", data->solar_current);
+        printf("Solar Power: %.2fW\n", data->solar_power);
+    }
 }

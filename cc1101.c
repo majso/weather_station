@@ -2,6 +2,8 @@
 #include "pico/stdlib.h" // For Pico-specific functions like sleep_ms
 #include "hardware/spi.h"
 #include "hardware/gpio.h"
+#include <stdio.h>
+#include <string.h>
 
 void cc1101_init(void) {
     spi_init(spi0, 500 * 1000);  // 500 kHz SPI
@@ -45,39 +47,82 @@ uint8_t cc1101_read_reg(uint8_t addr) {
     return result;
 }
 
-void cc1101_read_burst(uint8_t addr, uint8_t* buffer, uint8_t length) {
+uint8_t  cc1101_read_burst(uint8_t addr, uint8_t* buffer, uint8_t length) {
     addr |= 0xC0;  // Burst mode bit set (bit 6) and read bit set (bit 7)
     gpio_put(CC1101_CS_PIN, 0);  // CS low
     spi_write_blocking(spi0, &addr, 1);  // Write address with burst mode
     spi_read_blocking(spi0, 0x00, buffer, length);  // Read data bytes into buffer
     gpio_put(CC1101_CS_PIN, 1);  // CS high
+    return buffer[0];  // Return the first byte read (packet status byte)
 }
 
 // Function to send data using the TX FIFO
 void cc1101_send_data(uint8_t* data, uint8_t length) {
+    // Ensure that length does not exceed TX FIFO buffer size
+    if (length > CC1101_MAX_PAYLOAD_LENGTH) {
+        printf("Error: Data length exceeds TX FIFO buffer size.\n");
+        return;
+    }
+
     // Set the CC1101 to IDLE mode
     cc1101_strobe(CC1101_SIDLE);
-    // Flush TX FIFO before sending data
-    cc1101_strobe(CC1101_SFTX);  // SFTX strobe
-    // Write data to FIFO
-    cc1101_write_burst(CC1101_TXFIFO_BURST, data, length);
-     // Set the CC1101 to TX mode to send the data
-    cc1101_strobe(CC1101_STX);
-    // Flush TX FIFO after sending data
-    cc1101_strobe(CC1101_SFTX);  // SFTX strobe
-}
 
+    // Flush TX FIFO to clear old data
+    cc1101_strobe(CC1101_SFTX);
+
+    // Write data to TX FIFO
+    cc1101_write_burst(CC1101_TXFIFO_BURST, data, length);
+
+    // Start the transmission
+    cc1101_strobe(CC1101_STX);
+
+    // Ensure the radio is back in RX mode after transmission
+    cc1101_strobe(CC1101_SRX);
+
+    printf("Data sent successfully.\n");
+}
 // Function to receive data using the RX FIFO
 void cc1101_receive_data(uint8_t* buffer, uint8_t length) {
+    uint8_t rxBytes = 0, rxBytesVerify = 0, marcState = 0;
+
+    // Set to IDLE and flush RX FIFO
     cc1101_strobe(CC1101_SIDLE);
-    // Flush RX FIFO before receiving data
-    cc1101_strobe(CC1101_SFRX);  // SFRX strobe
-    // Set the CC1101 to RX mode
+    cc1101_strobe(CC1101_SFRX);
     cc1101_strobe(CC1101_SRX);
-    // Read the data from the RX FIFO
-    cc1101_read_burst(CC1101_RXFIFO_BURST, buffer, length);
-    // Flush RX FIFO after receiving data
-    cc1101_strobe(CC1101_SFRX);  // SFRX strobe
+    cc1101_signal_strength(); // Print signal strength
+
+
+    // Recommended process to check RX bytes
+    do {
+        rxBytes = cc1101_read_reg(CC1101_RXBYTES) & 0x7F;  // Mask to get only the lower 7 bits
+        rxBytesVerify = cc1101_read_reg(CC1101_RXBYTES) & 0x7F;
+    } while (rxBytes != rxBytesVerify);
+
+    if (rxBytes > 0) {
+        marcState = cc1101_read_reg(CC1101_MARCSTATE) & 0x1F;
+
+        // Check for RX FIFO Overflow error
+        if (marcState == 0x11) {  // RXFIFO_OVERFLOW
+            cc1101_strobe(CC1101_SFRX);  // Clear RX FIFO
+            printf("RX FIFO overflow, data discarded.\n");
+        } else {
+            // Read the RX FIFO content
+            cc1101_read_burst(CC1101_RXFIFO_BURST, buffer, rxBytes);
+
+            // Check CRC (bit 7 in the last status byte)
+            if (buffer[rxBytes - 1] & 0x80) {
+                printf("Packet received correctly.\n");
+            } else {
+                printf("CRC error, packet discarded.\n");
+                memset(buffer, 0, length);  // Clear the buffer due to CRC error
+            }
+        }
+    } else {
+        printf("No data in RX FIFO.\n");
+    }
+
+    // Set radio back to RX mode
+    cc1101_strobe(CC1101_SRX);
 }
 
 void cc1101_strobe(uint8_t strobe) {
@@ -93,4 +138,24 @@ void cc1101_reset(void) {
     sleep_ms(10);
     // Reset the CC1101
     cc1101_strobe(CC1101_SRES);  // Strobe SRES (reset)
+}
+
+void cc1101_signal_strength() {
+    uint8_t rssi_raw = cc1101_read_reg(CC1101_RSSI);
+    int8_t rssi_dbm;
+    if (rssi_raw >= 128) {
+        rssi_dbm = (int8_t)(rssi_raw - 256) / 2 - 74;
+    } else {
+        rssi_dbm = (rssi_raw / 2) - 74;
+    }
+
+    printf("Current RSSI: %d dBm\n", rssi_dbm);
+
+    if (rssi_dbm < -100) {
+        printf("Signal is very weak\n");
+    } else if (rssi_dbm < -70) {
+        printf("Signal is moderate\n");
+    } else {
+        printf("Signal is strong\n");
+    }
 }
