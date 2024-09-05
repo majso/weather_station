@@ -11,7 +11,7 @@
 #define CC1101_MOSI_PIN   7   //Green SPI Master Out Slave In (MOSI) pin (GPIO 7)
 #define CC1101_MISO_PIN   4   //Purple SPI Master In Slave Out (MISO) pin (GPIO 4)
 
-#define CC1101_MAX_PAYLOAD_LENGTH 40   // Maximum length of payload
+#define CC1101_MAX_PAYLOAD_LENGTH 42   // Maximum length of payload
 
 // CC1101 Command Strobes
 #define CC1101_SRES          0x30  // Reset chip
@@ -97,7 +97,7 @@
 void cc1101_init(void);
 void cc1101_write_reg(uint8_t addr, uint8_t value);
 uint8_t cc1101_read_reg(uint8_t addr);
-void cc1101_send_data(uint8_t* data, uint8_t length);
+void cc1101_send_data(uint8_t* data, uint8_t length, uint8_t address);
 void cc1101_receive_data(uint8_t* buffer, uint8_t length);
 void cc1101_strobe(uint8_t strobe);
 void cc1101_reset(void);

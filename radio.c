@@ -76,7 +76,7 @@ static void sensor_data_to_bytes(const SensorData *data, uint8_t *buffer, uint8_
 // Helper function to convert byte array to SensorData
 static void bytes_to_sensor_data(const uint8_t *buffer, uint8_t length, SensorData *data) {
     if (length >= sizeof(SensorData)) {
-        uint8_t index = 1;
+        uint8_t index = 0;
         
         memcpy(&data->temperature, &buffer[index], sizeof(float)); index += sizeof(float);
         memcpy(&data->pressure, &buffer[index], sizeof(float)); index += sizeof(float);
@@ -103,6 +103,7 @@ void print_binary(const uint8_t *buffer, size_t length) {
 void radio_send_data(const SensorData *data) {
     uint8_t buffer[64] = {0};;
     uint8_t length;
+    uint8_t address = cc1101_read_reg(CC1101_ADDR);
 
     // Convert SensorData to byte array
     sensor_data_to_bytes(data, buffer, &length);
@@ -111,18 +112,7 @@ void radio_send_data(const SensorData *data) {
     printf("Initial GDO0 state: %d\n", gpio_get(CC1101_GDO0_PIN));
 
     // Write the data to the TX FIFO
-    cc1101_send_data(buffer, length);
-
-    while (!gpio_get(CC1101_GDO0_PIN)) {
-        printf("Waiting for GDO0 to go high (packet transmission in progress)...\n");
-        sleep_ms(1000); // Small delay to avoid flooding the console
-    }
-    // Optionally, wait until the TX FIFO is empty (GDO0 goes low again)
-    while (gpio_get(CC1101_GDO0_PIN)) {
-        printf("Waiting for GDO0 to go low (TX FIFO empty)...\n");
-        sleep_ms(100); // Small delay to avoid flooding the console
-    }
-    printf("GDO0 is low (TX FIFO empty).\n");
+    cc1101_send_data(buffer, length,address);
 }
 
 void radio_receive_data(SensorData *data) {

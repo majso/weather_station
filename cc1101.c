@@ -57,9 +57,9 @@ uint8_t  cc1101_read_burst(uint8_t addr, uint8_t* buffer, uint8_t length) {
 }
 
 // Function to send data using the TX FIFO
-void cc1101_send_data(uint8_t* data, uint8_t length) {
-    // Ensure that length does not exceed TX FIFO buffer size
-    if (length > CC1101_MAX_PAYLOAD_LENGTH) {
+void cc1101_send_data(uint8_t* data, uint8_t length, uint8_t address) {
+    // Ensure that the total packet length does not exceed TX FIFO buffer size
+    if (length + 2 > CC1101_MAX_PAYLOAD_LENGTH) { // +2 for length byte and address byte
         printf("Error: Data length exceeds TX FIFO buffer size.\n");
         return;
     }
@@ -70,15 +70,29 @@ void cc1101_send_data(uint8_t* data, uint8_t length) {
     // Flush TX FIFO to clear old data
     cc1101_strobe(CC1101_SFTX);
 
-    // Write data to TX FIFO
-    cc1101_write_burst(CC1101_TXFIFO_BURST, data, length);
+    // Create a buffer to include the length byte, address byte, and the payload
+    uint8_t txBuffer[CC1101_MAX_PAYLOAD_LENGTH + 2];
+    txBuffer[0] = length + 1; // Length byte (address byte + payload length)
+    txBuffer[1] = address;    // Address byte
+
+    // Copy the payload data into the buffer
+    memcpy(&txBuffer[2], data, length);
+
+    // Write the prepared data to TX FIFO
+    cc1101_write_burst(CC1101_TXFIFO_BURST, txBuffer, length + 2);
 
     // Start the transmission
     cc1101_strobe(CC1101_STX);
 
+    while (!gpio_get(CC1101_GDO0_PIN)) {
+        printf("Waiting for GDO0 to go high (packet transmission in progress)...\n");
+        sleep_ms(1000); // Small delay to avoid flooding the console
+    }
+    // Wait for the transmission to complete (GDO0 goes low)
+    while (gpio_get(CC1101_GDO0_PIN)); // Wait for GDO0 to go low (TX complete)
+    printf("GDO0 is low (TX FIFO empty).\n");
     // Ensure the radio is back in RX mode after transmission
     cc1101_strobe(CC1101_SRX);
-
     printf("Data sent successfully.\n");
 }
 // Function to receive data using the RX FIFO
