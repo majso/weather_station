@@ -10,7 +10,7 @@ int main()
     stdio_init_all();
 
     printf("Radio starting..\n");
-    radio_init();
+    radio_init(F_433);
 
     printf("Hello, IoT world from RP2040!\n");
     sensors_init();

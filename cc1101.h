@@ -75,6 +75,7 @@
 #define CC1101_AGCTEST       0x2B  // AGC test
 #define CC1101_TEST2         0x2C  // Various test settings
 #define CC1101_TEST1         0x2D  // Various test settings
+#define CC1101_TEST0         0x2E  // Various test settings
 #define CC1101_PARTNUM       0x30  // Part number
 #define CC1101_VERSION       0x31  // Current version number
 #define CC1101_FREQEST       0x32  // Frequency offset estimate

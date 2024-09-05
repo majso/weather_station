@@ -47,55 +47,30 @@ uint8_t cc1101_read_reg(uint8_t addr) {
     return result;
 }
 
-uint8_t  cc1101_read_burst(uint8_t addr, uint8_t* buffer, uint8_t length) {
+void cc1101_read_burst(uint8_t addr, uint8_t* buffer, uint8_t length) {
     addr |= 0xC0;  // Burst mode bit set (bit 6) and read bit set (bit 7)
     gpio_put(CC1101_CS_PIN, 0);  // CS low
     spi_write_blocking(spi0, &addr, 1);  // Write address with burst mode
     spi_read_blocking(spi0, 0x00, buffer, length);  // Read data bytes into buffer
     gpio_put(CC1101_CS_PIN, 1);  // CS high
-    return buffer[0];  // Return the first byte read (packet status byte)
 }
 
 // Function to send data using the TX FIFO
-void cc1101_send_data(uint8_t* data, uint8_t length, uint8_t address) {
-    // Ensure that the total packet length does not exceed TX FIFO buffer size
-    if (length + 2 > CC1101_MAX_PAYLOAD_LENGTH) { // +2 for length byte and address byte
-        printf("Error: Data length exceeds TX FIFO buffer size.\n");
-        return;
-    }
-
-    // Set the CC1101 to IDLE mode
-    cc1101_strobe(CC1101_SIDLE);
-
-    // Flush TX FIFO to clear old data
-    cc1101_strobe(CC1101_SFTX);
-
-    // Create a buffer to include the length byte, address byte, and the payload
-    uint8_t txBuffer[CC1101_MAX_PAYLOAD_LENGTH + 2];
-    txBuffer[0] = length + 1; // Length byte (address byte + payload length)
-    txBuffer[1] = address;    // Address byte
-
-    // Copy the payload data into the buffer
-    memcpy(&txBuffer[2], data, length);
-
+void cc1101_send_data(uint8_t* buffer, uint8_t length, uint8_t address) {
+    // Write the length byte to TX FIFO
+    cc1101_write_reg(CC1101_TXFIFO_SINGLE_BYTE, length);
     // Write the prepared data to TX FIFO
-    cc1101_write_burst(CC1101_TXFIFO_BURST, txBuffer, length + 2);
-
+    cc1101_write_burst(CC1101_TXFIFO_BURST, buffer, length);
     // Start the transmission
     cc1101_strobe(CC1101_STX);
-
-    while (!gpio_get(CC1101_GDO0_PIN)) {
-        printf("Waiting for GDO0 to go high (packet transmission in progress)...\n");
-        sleep_ms(1000); // Small delay to avoid flooding the console
-    }
-    // Wait for the transmission to complete (GDO0 goes low)
-    while (gpio_get(CC1101_GDO0_PIN)); // Wait for GDO0 to go low (TX complete)
-    printf("GDO0 is low (TX FIFO empty).\n");
-    // Ensure the radio is back in RX mode after transmission
-    cc1101_strobe(CC1101_SRX);
-    printf("Data sent successfully.\n");
+    // Wait for GDO0 to be set -> sync transmitted
+    while (!gpio_get(CC1101_GDO0_PIN));
+    // Wait for GDO0 to be cleared -> end of packet
+    while (gpio_get(CC1101_GDO0_PIN));
+    // Flush TX FIFO
+    cc1101_strobe(CC1101_SFTX);
 }
-// Function to receive data using the RX FIFO
+// Function to receive data using the RX FIFOvoid 
 void cc1101_receive_data(uint8_t* buffer, uint8_t length) {
     uint8_t rxBytes = 0, rxBytesVerify = 0, marcState = 0;
 
