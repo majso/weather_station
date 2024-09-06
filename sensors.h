@@ -12,6 +12,12 @@
 #define SHT40_I2C_ADDRESS 0x44
 #define INA219_I2C_ADDRESS 0x40
 
+#define SEA_LEVEL_PRESSURE_HPA 1013.25 // Standard sea level pressure in hPa
+#define SEA_LEVEL_PRESSURE_PA (SEA_LEVEL_PRESSURE_HPA * 100.0f) // Convert hPa to Pa
+#define TEMPERATURE_LAPSE_RATE 0.0065 // Temperature lapse rate in K/m (average)
+#define GRAVITY_ACCELERATION 9.80665 // Acceleration due to gravity in m/s^2
+#define MOLAR_MASS_AIR 0.0289644 // Molar mass of air in kg/mol
+#define UNIVERSAL_GAS_CONSTANT 8.31447 // Universal gas constant in J/(mol·K)
 
 typedef struct {
     float temperature;

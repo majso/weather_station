@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "sensors.h"
 
 // Init constants
 #define F_915       0x00
@@ -22,20 +23,6 @@
 #define F2_433  0x10       
 #define F1_433  0xA7        
 #define F0_433  0x62    
-
-
-typedef struct {
-    float temperature;
-    float pressure;
-    float exterior_temperature;
-    float exterior_humidity;
-    float battery_voltage;
-    float battery_current;
-    float battery_power;
-    float solar_voltage;
-    float solar_current;
-    float solar_power;
-} SensorData;
 
 // Initialize the radio module
 void radio_init(uint8_t f);

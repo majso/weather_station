@@ -5,6 +5,7 @@
 #include "sht40.h" // Include the header file for the SHT40 sensor
 #include "bmp280.h" // Include the header file for the BMP280 sensor
 #include <stdio.h>
+#include <math.h>
 
 INA219 ina219_battery;
 INA219 ina219_solar;
@@ -99,11 +100,51 @@ float read_pressure_from_bmp280() {
 }
 
 
-// Read all sensor data
+float calculate_sea_level_pressure(float pressure, float temperature, float altitude) {
+    // Convert temperature to Kelvin
+    float temperature_kelvin = temperature + 273.15;
+    
+    // Calculate sea level pressure using the formula
+    float sea_level_pressure = pressure * pow((1 + (TEMPERATURE_LAPSE_RATE * altitude) / temperature_kelvin), 
+                                             (GRAVITY_ACCELERATION * MOLAR_MASS_AIR) / (UNIVERSAL_GAS_CONSTANT * TEMPERATURE_LAPSE_RATE));
+    
+    return sea_level_pressure;
+}
+
+float calculate_altitude(float pressure, float temperature) {
+    // Convert temperature to Kelvin
+    float temperature_kelvin = temperature + 273.15;
+    
+    // Calculate altitude using the barometric formula
+    float altitude = (temperature_kelvin / TEMPERATURE_LAPSE_RATE) * 
+                      (1 - pow((pressure / SEA_LEVEL_PRESSURE_PA), 
+                      (UNIVERSAL_GAS_CONSTANT * TEMPERATURE_LAPSE_RATE) / 
+                      (GRAVITY_ACCELERATION * MOLAR_MASS_AIR)));
+    
+    return altitude;
+}
+
+// Function to read and normalize pressure to sea level
+float convert_pressure_to_sea_level(float temperature) {
+    float measured_pressure = read_pressure_from_bmp280(); // Read pressure from BMP280
+
+    // Convert pressure to hPa
+    float measured_pressure_pa = measured_pressure / 256.0f;
+    float measured_pressure_hpa = measured_pressure / 25600.0f;
+    
+    // Estimate altitude based on measured pressure
+    float estimated_altitude = calculate_altitude(measured_pressure_pa, temperature);
+    printf("Estimated altitude: %f\n", estimated_altitude);
+    
+    // Calculate sea level pressure using estimated altitude
+    float sea_level_pressure_hpa = calculate_sea_level_pressure(measured_pressure_hpa, temperature, estimated_altitude);
+    
+    return sea_level_pressure_hpa;
+}
+
 // Read all sensor data
 SensorData sensors_read_all() {
     SensorData data = {0};
-
     /*
     // Read battery data from INA219 sensor
     data.battery_voltage = read_voltage_from_ina219(&ina219_battery);
@@ -130,10 +171,8 @@ SensorData sensors_read_all() {
     printf("Reading temperature and pressure from BMP280\n");
     data.temperature = read_temperature_from_bmp280();
     printf("Temperature: %f\n", data.temperature);
-    data.pressure = read_pressure_from_bmp280();
+    data.pressure = convert_pressure_to_sea_level(data.temperature / 100.0f);
     printf("Pressure: %f\n", data.pressure);
-
-  
 
     return data;
 }
