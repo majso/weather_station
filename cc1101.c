@@ -71,7 +71,7 @@ void cc1101_send_data(uint8_t* buffer, uint8_t length, uint8_t address) {
     cc1101_strobe(CC1101_SFTX);
 }
 // Function to receive data using the RX FIFOvoid 
-void cc1101_receive_data(uint8_t* buffer, uint8_t length) {
+void cc1101_receive_data(uint8_t* buffer, uint8_t* length) {
     uint8_t rxBytes = 0, rxBytesVerify = 0, marcState = 0;
 
     // Set to IDLE and flush RX FIFO
@@ -79,7 +79,6 @@ void cc1101_receive_data(uint8_t* buffer, uint8_t length) {
     cc1101_strobe(CC1101_SFRX);
     cc1101_strobe(CC1101_SRX);
     cc1101_signal_strength(); // Print signal strength
-
 
     // Recommended process to check RX bytes
     do {
@@ -94,6 +93,7 @@ void cc1101_receive_data(uint8_t* buffer, uint8_t length) {
         if (marcState == 0x11) {  // RXFIFO_OVERFLOW
             cc1101_strobe(CC1101_SFRX);  // Clear RX FIFO
             printf("RX FIFO overflow, data discarded.\n");
+            *length = 0;  // Update length to 0 due to overflow
         } else {
             // Read the RX FIFO content
             cc1101_read_burst(CC1101_RXFIFO_BURST, buffer, rxBytes);
@@ -101,13 +101,16 @@ void cc1101_receive_data(uint8_t* buffer, uint8_t length) {
             // Check CRC (bit 7 in the last status byte)
             if (buffer[rxBytes - 1] & 0x80) {
                 printf("Packet received correctly.\n");
+                *length = rxBytes;  // Update length to the number of bytes received
             } else {
                 printf("CRC error, packet discarded.\n");
-                memset(buffer, 0, length);  // Clear the buffer due to CRC error
+                memset(buffer, 0, *length);  // Clear the buffer due to CRC error
+                *length = 0;  // Update length to 0 due to CRC error
             }
         }
     } else {
         printf("No data in RX FIFO.\n");
+        *length = 0;  // Update length to 0 if no data
     }
 
     // Set radio back to RX mode

@@ -146,6 +146,7 @@ void radio_send_data(const SensorData *data) {
 
 void radio_receive_data(SensorData *data) {
     uint8_t buffer[64] = {0};
+    uint8_t length;
      // Set the CC1101 to IDLE mode
     cc1101_strobe(CC1101_SIDLE);
     cc1101_strobe(CC1101_SRX);
@@ -161,20 +162,18 @@ void radio_receive_data(SensorData *data) {
     printf("GDO0 is high (packet received).\n");
 
     // Read the data from the RX FIFO
-    cc1101_receive_data(buffer, sizeof(buffer));
+    cc1101_receive_data(buffer, &length);
 
-    // Print the payload
-    printf("Received payload: ");
-    for (int i = 0; i < sizeof(buffer); i++) {
-        printf("%02X ", buffer[i]);
+    if (length == 0) {
+        printf("No data processed.\n");
+        return;
     }
-    printf("\n");
     // Print the entire packet in binary format
     printf("Received packet in binary: ");
-    print_binary(buffer, sizeof(buffer));
+    print_binary(buffer, length);
 
     // Convert the received buffer into a SensorData struct
-    bytes_to_sensor_data(buffer, sizeof(buffer), data);
+    bytes_to_sensor_data(buffer, length, data);
 
     // Print the received data
     printf("Temperature: %.2f°C\n", data->temperature);

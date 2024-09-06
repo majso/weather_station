@@ -99,7 +99,7 @@ void cc1101_init(void);
 void cc1101_write_reg(uint8_t addr, uint8_t value);
 uint8_t cc1101_read_reg(uint8_t addr);
 void cc1101_send_data(uint8_t* data, uint8_t length, uint8_t address);
-void cc1101_receive_data(uint8_t* buffer, uint8_t length);
+void cc1101_receive_data(uint8_t* buffer, uint8_t* length);
 void cc1101_strobe(uint8_t strobe);
 void cc1101_reset(void);
 void cc1101_signal_strength(void);
