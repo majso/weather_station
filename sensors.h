@@ -18,6 +18,7 @@
 #define GRAVITY_ACCELERATION 9.80665 // Acceleration due to gravity in m/s^2
 #define MOLAR_MASS_AIR 0.0289644 // Molar mass of air in kg/mol
 #define UNIVERSAL_GAS_CONSTANT 8.31447 // Universal gas constant in J/(mol·K)
+#define SEA_LEVEL_TEMP_K 288.15f // Standard sea-level temperature in Kelvin
 
 typedef struct {
     float temperature;
