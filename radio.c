@@ -105,9 +105,20 @@ static void sensor_data_to_bytes(const SensorData *data, uint8_t *buffer, uint8_
 }
 
 // Helper function to convert byte array to SensorData
-static void bytes_to_sensor_data(const uint8_t *buffer, uint8_t length, SensorData *data) {
-    uint8_t byte_index = 1;
-    
+void bytes_to_sensor_data(const uint8_t *buffer, uint8_t *packet_length, uint8_t *address, SensorData *data) {
+    if (buffer == NULL || data == NULL || packet_length == NULL || address == NULL) {
+        printf("Invalid pointer passed to bytes_to_sensor_data.\n");
+        return;
+    }
+
+    // Read length and address from buffer
+    *packet_length = buffer[0];  // Length of the packet
+    *address = buffer[1];        // Address
+
+    // Set up byte_index to point to the start of the payload
+    uint8_t byte_index = 2;
+
+    // Convert the payload bytes to SensorData structure
     memcpy(&data->temperature, &buffer[byte_index], sizeof(float)); byte_index += sizeof(float);
     memcpy(&data->pressure, &buffer[byte_index], sizeof(float)); byte_index += sizeof(float);
     memcpy(&data->exterior_temperature, &buffer[byte_index], sizeof(float)); byte_index += sizeof(float);
@@ -147,6 +158,8 @@ void radio_send_data(const SensorData *data) {
 void radio_receive_data(SensorData *data) {
     uint8_t buffer[64] = {0};
     uint8_t length;
+    uint8_t address = cc1101_read_reg(CC1101_ADDR);
+
      // Set the CC1101 to IDLE mode
     cc1101_strobe(CC1101_SIDLE);
     cc1101_strobe(CC1101_SRX);
@@ -172,9 +185,14 @@ void radio_receive_data(SensorData *data) {
     printf("Received packet in binary: ");
     print_binary(buffer, length);
 
+    uint8_t packet_length;
+    uint8_t packet_address;
     // Convert the received buffer into a SensorData struct
-    bytes_to_sensor_data(buffer, length, data);
-
+    bytes_to_sensor_data(buffer, &packet_length, &packet_address, data);
+    // Print the length
+    printf("Length: %d\n", packet_length);
+    // Print the address in hexadecimal format
+    printf("Address: 0x%02X\n", packet_address);
     // Print the received data
     printf("Temperature: %.2f°C\n", data->temperature);
     printf("Pressure: %.2f hPa\n", data->pressure);
