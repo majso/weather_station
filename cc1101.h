@@ -88,7 +88,7 @@
 #define CC1101_VCO_VC_DAC    0x39  // VCO power control
 #define CC1101_TXBYTES       0x3A  // Underflow and number of bytes
 #define CC1101_RXBYTES       0x3B  // Underflow and number of bytes
-
+#define CC1101_PATABLE       0x3E // Address for the PATABLE register
 #define CC1101_TXFIFO_SINGLE_BYTE 0x3F  // Single byte access to TX FIFO
 #define CC1101_TXFIFO_BURST 0x7F       // Burst access to TX FIFO
 #define CC1101_RXFIFO_SINGLE_BYTE 0xBF // Single byte access to RX FIFO
@@ -103,5 +103,6 @@ void cc1101_receive_data(uint8_t* buffer, uint8_t* length);
 void cc1101_strobe(uint8_t strobe);
 void cc1101_reset(void);
 void cc1101_signal_strength(void);
+void cc1101_set_tx_power(uint8_t power);
 
 #endif // CC1101_H

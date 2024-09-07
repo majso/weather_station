@@ -151,3 +151,9 @@ void cc1101_signal_strength() {
         printf("Signal is strong\n");
     }
 }
+
+void cc1101_set_tx_power(uint8_t power)
+{
+    uint8_t paTable[8] = {power}; // Set PA Table with a single element to the desired value
+    cc1101_write_burst(CC1101_PATABLE, paTable, 1); // Write the value to PATABLE
+}
