@@ -1,8 +1,8 @@
-# Simple RP2030 Weather Station
+# Simple RP2040 Weather Station
 
 ## Overview
 
-Build a weather station using the RP2030 microcontroller.
+Build a weather station using the RP2040 microcontroller.
 
 ## Current Functionality
 
